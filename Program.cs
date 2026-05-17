@@ -1,41 +1,64 @@
+using Microsoft.EntityFrameworkCore;
+using multi_tenant_beauty_platform_back.Application.Services;
+using multi_tenant_beauty_platform_back.Domain.Repositories;
+using multi_tenant_beauty_platform_back.Infrastructure.Data;
+using multi_tenant_beauty_platform_back.Infrastructure.Repositories;
+using multi_tenant_beauty_platform_back.Presentation.Endpoints;
+using multi_tenant_beauty_platform_back.Presentation.Middlewares;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// 1. Add Presentation & OpenAPI / Swagger Services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() 
+    { 
+        Title = "Multi-Tenant Beauty Platform API - Clean Architecture", 
+        Version = "v1",
+        Description = "Enterprise-grade Clean Architecture API supporting multi-tenant beauty platform operations."
+    });
+});
+
+// 2. Add Global Exception Handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// 3. Add Infrastructure Services (Database & Repositories)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("BeautyPlatformCleanDb"));
+
+builder.Services.AddScoped<IOnboardingRepository, OnboardingRepository>();
+
+// 4. Add Application Services
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
+
+// 5. Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler(); // Uses GlobalExceptionHandler registered above
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Multi-Tenant Beauty Platform API v1"));
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Map Endpoints cleanly via Presentation Layer extension method
+app.MapOnboardingEndpoints();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
