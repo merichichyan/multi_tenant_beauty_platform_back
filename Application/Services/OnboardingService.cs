@@ -18,24 +18,22 @@ public class OnboardingService : IOnboardingService
     {
         ValidateRequest(request);
 
-        // Check if onboarding already exists for this device
         var existingSubmission = await _repository.GetByDeviceIdAsync(request.DeviceId, cancellationToken);
 
         if (existingSubmission != null)
         {
-            // Update existing preferences
-            existingSubmission.UpdatePreferences(request.Language, request.Role, request.Timezone);
+            existingSubmission.UpdatePreferences(request.Language, request.Role, request.Timezone, request.NotificationsAllowed);
             await _repository.UpdateAsync(existingSubmission, cancellationToken);
             return MapToDto(existingSubmission);
         }
 
-        // Create new submission
         var newSubmission = new OnboardingSubmission(
             request.DeviceId,
             request.ProgramId,
             request.Language,
             request.Role,
-            request.Timezone
+            request.Timezone,
+            request.NotificationsAllowed
         );
 
         var savedSubmission = await _repository.AddAsync(newSubmission, cancellationToken);
@@ -91,6 +89,7 @@ public class OnboardingService : IOnboardingService
             entity.Language,
             entity.Role,
             entity.Timezone,
+            entity.NotificationsAllowed,
             entity.CreatedAt,
             entity.UpdatedAt
         );

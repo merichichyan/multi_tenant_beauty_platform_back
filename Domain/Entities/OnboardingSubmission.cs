@@ -8,13 +8,13 @@ public class OnboardingSubmission
     public string Language { get; private set; } = string.Empty;
     public string Role { get; private set; } = string.Empty;
     public string Timezone { get; private set; } = string.Empty;
+    public bool NotificationsAllowed { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    // EF Core constructor
     protected OnboardingSubmission() { }
 
-    public OnboardingSubmission(string deviceId, string programId, string language, string role, string timezone)
+    public OnboardingSubmission(string deviceId, string programId, string language, string role, string timezone, bool notificationsAllowed)
     {
         Id = Guid.NewGuid();
         DeviceId = deviceId;
@@ -22,14 +22,16 @@ public class OnboardingSubmission
         Language = language;
         Role = role;
         Timezone = timezone;
+        NotificationsAllowed = notificationsAllowed;
         CreatedAt = DateTime.UtcNow;
     }
 
-    public void UpdatePreferences(string language, string role, string timezone)
+    public void UpdatePreferences(string language, string role, string timezone, bool notificationsAllowed)
     {
         Language = language;
         Role = role;
         Timezone = timezone;
+        NotificationsAllowed = notificationsAllowed;
         UpdatedAt = DateTime.UtcNow;
     }
 }

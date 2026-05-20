@@ -8,16 +8,16 @@ public static class OnboardingEndpoints
 {
     public static IEndpointRouteBuilder MapOnboardingEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/onboarding")
+        var group = app.MapGroup("/api/onboarding")
                        .WithTags("Onboarding");
 
         group.MapPost("/", async ([FromBody] OnboardingRequestDto request, IOnboardingService onboardingService, CancellationToken ct) =>
         {
             var result = await onboardingService.SubmitOnboardingAsync(request, ct);
-            return Results.Created($"/api/v1/onboarding/{result.Id}", result);
+            return Results.Created($"/api/onboarding/{result.Id}", result);
         })
         .WithSummary("Submit onboarding preferences")
-        .WithDescription("Registers or updates onboarding preferences (Language, Role, Timezone) for a device/user.");
+        .WithDescription("Registers or updates onboarding preferences (Language, Role, Timezone, NotificationsAllowed) for a device/user.");
 
         group.MapGet("/{id:guid}", async (Guid id, IOnboardingService onboardingService, CancellationToken ct) =>
         {

@@ -7,6 +7,7 @@ public record OnboardingResponseDto(
     string Language,
     string Role,
     string Timezone,
+    bool NotificationsAllowed,
     DateTime CreatedAt,
     DateTime? UpdatedAt
 );

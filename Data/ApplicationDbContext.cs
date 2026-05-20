@@ -11,6 +11,12 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<OnboardingSubmission> OnboardingSubmissions { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<SpecialistProfile> SpecialistProfiles { get; set; }
+    public DbSet<SalonProfile> SalonProfiles { get; set; }
+    public DbSet<StaffMember> StaffMembers { get; set; }
+    public DbSet<ServiceItem> ServiceItems { get; set; }
+    public DbSet<ServiceCategory> ServiceCategories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,7 +30,74 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Language).IsRequired().HasMaxLength(10);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Timezone).HasMaxLength(100);
-            entity.HasIndex(e => e.DeviceId).IsUnique(); // One active onboarding per device/user in this design
+            entity.Property(e => e.NotificationsAllowed).IsRequired();
+            entity.HasIndex(e => e.DeviceId).IsUnique();
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.PasswordHash).IsRequired();
+            entity.Property(e => e.IsOnboardingCompleted).IsRequired();
+            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.Email).IsUnique();
+
+            entity.HasOne(e => e.SpecialistProfile)
+                  .WithOne()
+                  .HasForeignKey<SpecialistProfile>(sp => sp.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.SalonProfile)
+                  .WithOne()
+                  .HasForeignKey<SalonProfile>(sp => sp.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SpecialistProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Address).IsRequired().HasMaxLength(300);
+            entity.HasMany(e => e.Services)
+                  .WithOne()
+                  .HasForeignKey(s => s.SpecialistProfileId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SalonProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SalonName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Address).IsRequired().HasMaxLength(300);
+            entity.HasMany(e => e.StaffMembers)
+                  .WithOne()
+                  .HasForeignKey(sm => sm.SalonProfileId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StaffMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
+            entity.HasMany(e => e.Services)
+                  .WithOne()
+                  .HasForeignKey(s => s.StaffMemberId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ServiceItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Price);
+        });
+
+        modelBuilder.Entity<ServiceCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
         });
     }
 }
