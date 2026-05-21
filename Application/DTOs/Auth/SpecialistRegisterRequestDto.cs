@@ -13,6 +13,7 @@ public record SpecialistRegisterRequestDto(
     [property: JsonPropertyName("email")] string Email,
     [property: JsonPropertyName("password")] string Password,
     [property: JsonPropertyName("fullName")] string FullName,
+    [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("phone")] string Phone,
     [property: JsonPropertyName("address")] string Address,
     [property: JsonPropertyName("latitude")] double? Latitude,

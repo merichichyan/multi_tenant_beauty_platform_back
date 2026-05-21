@@ -31,7 +31,7 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.FullName, "user");
+        var user = new User(request.Email, passwordHash, request.FullName, request.Role.ToLower().Trim());
 
         var savedUser = await _userRepository.AddAsync(user, cancellationToken);
 
@@ -52,7 +52,7 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.FullName, "user", request.Phone, request.Gender, request.Birthday, request.DeviceId);
+        var user = new User(request.Email, passwordHash, request.FullName, request.Role.ToLower().Trim(), request.Phone, request.Gender, request.Birthday, request.DeviceId);
 
         var savedUser = await _userRepository.AddAsync(user, cancellationToken);
 
@@ -73,7 +73,7 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.FullName, "specialist", request.Phone, null, null, request.DeviceId);
+        var user = new User(request.Email, passwordHash, request.FullName, request.Role.ToLower().Trim(), request.Phone, null, null, request.DeviceId);
 
         var specialistProfile = new SpecialistProfile(
             user.Id,
@@ -116,7 +116,7 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.SalonName, "salon", request.Phone, null, null, request.DeviceId);
+        var user = new User(request.Email, passwordHash, request.SalonName, request.Role.ToLower().Trim(), request.Phone, null, null, request.DeviceId);
 
         var salonProfile = new SalonProfile(
             user.Id,
@@ -169,7 +169,7 @@ public class AuthService : IAuthService
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResponseDto(token, user.IsOnboardingCompleted);
+        return new AuthResponseDto(token, user.IsOnboardingCompleted, user.Role);
     }
 
     public async Task CompleteOnboardingAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -181,6 +181,43 @@ public class AuthService : IAuthService
         }
 
         user.CompleteOnboarding();
+        await _userRepository.UpdateAsync(user, cancellationToken);
+    }
+
+    public async Task SelectRoleAsync(SelectRoleRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var errors = new Dictionary<string, string[]>();
+
+        if (request.UserId == Guid.Empty)
+        {
+            errors.Add(nameof(request.UserId), new[] { "User ID is required." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Role))
+        {
+            errors.Add(nameof(request.Role), new[] { "Role is required." });
+        }
+        else
+        {
+            var normalizedRole = request.Role.ToLower().Trim();
+            if (normalizedRole != "user" && normalizedRole != "specialist" && normalizedRole != "salon")
+            {
+                errors.Add(nameof(request.Role), new[] { "Role must be 'user', 'specialist', or 'salon'." });
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
+
+        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (user == null)
+        {
+            throw new NotFoundException(nameof(User), request.UserId);
+        }
+
+        user.UpdateRole(request.Role.ToLower().Trim());
         await _userRepository.UpdateAsync(user, cancellationToken);
     }
 
@@ -199,6 +236,13 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(request.FullName))
         {
             errors.Add(nameof(request.FullName), new[] { "Full name is required." });
+        }
+        if (string.IsNullOrWhiteSpace(request.Role) || 
+            !(request.Role.ToLower().Trim() == "user" || 
+              request.Role.ToLower().Trim() == "specialist" || 
+              request.Role.ToLower().Trim() == "salon"))
+        {
+            errors.Add(nameof(request.Role), new[] { "Valid role (user, specialist, salon) is required." });
         }
 
         if (errors.Count > 0)
@@ -222,6 +266,13 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(request.FullName))
         {
             errors.Add(nameof(request.FullName), new[] { "Full name is required." });
+        }
+        if (string.IsNullOrWhiteSpace(request.Role) || 
+            !(request.Role.ToLower().Trim() == "user" || 
+              request.Role.ToLower().Trim() == "specialist" || 
+              request.Role.ToLower().Trim() == "salon"))
+        {
+            errors.Add(nameof(request.Role), new[] { "Valid role (user, specialist, salon) is required." });
         }
 
         if (errors.Count > 0)
@@ -254,6 +305,13 @@ public class AuthService : IAuthService
         {
             errors.Add(nameof(request.Address), new[] { "Address is required." });
         }
+        if (string.IsNullOrWhiteSpace(request.Role) || 
+            !(request.Role.ToLower().Trim() == "user" || 
+              request.Role.ToLower().Trim() == "specialist" || 
+              request.Role.ToLower().Trim() == "salon"))
+        {
+            errors.Add(nameof(request.Role), new[] { "Valid role (user, specialist, salon) is required." });
+        }
 
         if (errors.Count > 0)
         {
@@ -284,6 +342,13 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(request.Address))
         {
             errors.Add(nameof(request.Address), new[] { "Address is required." });
+        }
+        if (string.IsNullOrWhiteSpace(request.Role) || 
+            !(request.Role.ToLower().Trim() == "user" || 
+              request.Role.ToLower().Trim() == "specialist" || 
+              request.Role.Trim().ToLower() == "salon"))
+        {
+            errors.Add(nameof(request.Role), new[] { "Valid role (user, specialist, salon) is required." });
         }
 
         if (errors.Count > 0)

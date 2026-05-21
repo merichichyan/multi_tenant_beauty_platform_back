@@ -41,6 +41,12 @@ public class User
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void UpdateRole(string role)
+    {
+        Role = role;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public void SetSpecialistProfile(SpecialistProfile profile)
     {
         SpecialistProfile = profile;

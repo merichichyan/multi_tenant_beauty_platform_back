@@ -82,10 +82,15 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
+builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
+builder.Services.AddScoped<ISalonRepository, SalonRepository>();
 
 builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
+builder.Services.AddScoped<ISpecialistService, SpecialistService>();
+builder.Services.AddScoped<ISalonService, SalonService>();
+builder.Services.AddScoped<IListingService, ListingService>();
 
 builder.Services.AddCors(options =>
 {
@@ -116,6 +121,9 @@ app.UseAuthorization();
 app.MapOnboardingEndpoints();
 app.MapAuthEndpoints();
 app.MapServiceCategoryEndpoints();
+app.MapSpecialistEndpoints();
+app.MapSalonEndpoints();
+app.MapListingEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

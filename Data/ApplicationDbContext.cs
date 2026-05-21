@@ -28,7 +28,6 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.DeviceId).IsRequired().HasMaxLength(100);
             entity.Property(e => e.ProgramId).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Language).IsRequired().HasMaxLength(10);
-            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Timezone).HasMaxLength(100);
             entity.Property(e => e.NotificationsAllowed).IsRequired();
             entity.HasIndex(e => e.DeviceId).IsUnique();

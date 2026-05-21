@@ -22,7 +22,7 @@ public class OnboardingService : IOnboardingService
 
         if (existingSubmission != null)
         {
-            existingSubmission.UpdatePreferences(request.Language, request.Role, request.Timezone, request.NotificationsAllowed);
+            existingSubmission.UpdatePreferences(request.Language, request.Timezone, request.NotificationsAllowed);
             await _repository.UpdateAsync(existingSubmission, cancellationToken);
             return MapToDto(existingSubmission);
         }
@@ -31,7 +31,6 @@ public class OnboardingService : IOnboardingService
             request.DeviceId,
             request.ProgramId,
             request.Language,
-            request.Role,
             request.Timezone,
             request.NotificationsAllowed
         );
@@ -69,10 +68,6 @@ public class OnboardingService : IOnboardingService
         {
             errors.Add(nameof(request.Language), new[] { "Language is required." });
         }
-        if (string.IsNullOrWhiteSpace(request.Role))
-        {
-            errors.Add(nameof(request.Role), new[] { "Role is required." });
-        }
 
         if (errors.Count > 0)
         {
@@ -87,7 +82,6 @@ public class OnboardingService : IOnboardingService
             entity.DeviceId,
             entity.ProgramId,
             entity.Language,
-            entity.Role,
             entity.Timezone,
             entity.NotificationsAllowed,
             entity.CreatedAt,

@@ -52,6 +52,14 @@ public static class AuthEndpoints
         .WithSummary("Log in an existing user")
         .WithDescription("Authenticates a user and returns a JWT token along with onboarding status.");
 
+        authGroup.MapPost("/select-role", async ([FromBody] SelectRoleRequestDto request, IAuthService authService, CancellationToken ct) =>
+        {
+            await authService.SelectRoleAsync(request, ct);
+            return Results.Ok(new { message = "Role updated successfully.", role = request.Role });
+        })
+        .WithSummary("Select a user role")
+        .WithDescription("Updates the role of a user during/after registration.");
+
         var usersGroup = app.MapGroup("/api/users").WithTags("Users");
         usersGroup.MapPatch("/onboarding/complete", [Authorize] async (ClaimsPrincipal principal, [FromQuery] Guid? userId, IAuthService authService, CancellationToken ct) =>
         {

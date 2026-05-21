@@ -17,7 +17,7 @@ public static class OnboardingEndpoints
             return Results.Created($"/api/onboarding/{result.Id}", result);
         })
         .WithSummary("Submit onboarding preferences")
-        .WithDescription("Registers or updates onboarding preferences (Language, Role, Timezone, NotificationsAllowed) for a device/user.");
+        .WithDescription("Registers or updates onboarding preferences (Language, Timezone, NotificationsAllowed) for a device/user.");
 
         group.MapGet("/{id:guid}", async (Guid id, IOnboardingService onboardingService, CancellationToken ct) =>
         {

@@ -4,7 +4,6 @@ public record OnboardingRequestDto(
     string DeviceId,
     string ProgramId,
     string Language,
-    string Role,
     string Timezone,
     bool NotificationsAllowed
 );

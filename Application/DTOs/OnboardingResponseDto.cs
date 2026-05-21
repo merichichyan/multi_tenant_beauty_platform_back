@@ -5,7 +5,6 @@ public record OnboardingResponseDto(
     string DeviceId,
     string ProgramId,
     string Language,
-    string Role,
     string Timezone,
     bool NotificationsAllowed,
     DateTime CreatedAt,

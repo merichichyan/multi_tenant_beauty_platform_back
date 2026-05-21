@@ -13,6 +13,7 @@ public record SalonRegisterRequestDto(
     [property: JsonPropertyName("email")] string Email,
     [property: JsonPropertyName("password")] string Password,
     [property: JsonPropertyName("salonName")] string SalonName,
+    [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("phone")] string Phone,
     [property: JsonPropertyName("address")] string Address,
     [property: JsonPropertyName("latitude")] double? Latitude,

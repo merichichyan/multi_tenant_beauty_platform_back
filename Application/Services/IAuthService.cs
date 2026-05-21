@@ -10,4 +10,5 @@ public interface IAuthService
     Task<RegisterResponseDto> RegisterSalonAsync(SalonRegisterRequestDto request, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default);
     Task CompleteOnboardingAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task SelectRoleAsync(SelectRoleRequestDto request, CancellationToken cancellationToken = default);
 }
