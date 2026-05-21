@@ -16,7 +16,8 @@ public class AuthRepository : IAuthRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var normalizedEmail = email.ToLowerInvariant().Trim();
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
     }
 
     public async Task AddAsync(User user)

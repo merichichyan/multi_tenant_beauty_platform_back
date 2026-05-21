@@ -23,7 +23,7 @@ public class User
     public User(string email, string passwordHash, string fullName, string role, string? phone = null, string? gender = null, DateTime? birthday = null, string? deviceId = null)
     {
         Id = Guid.NewGuid();
-        Email = email;
+        Email = email.ToLowerInvariant().Trim();
         PasswordHash = passwordHash;
         FullName = fullName;
         Role = role;
