@@ -3,7 +3,7 @@ namespace multi_tenant_beauty_platform_back.Domain.Entities;
 public class StaffMember
 {
     public Guid Id { get; private set; }
-    public Guid SalonProfileId { get; private set; }
+    public Guid SalonId { get; private set; }
     public string FullName { get; private set; } = string.Empty;
     public string? Title { get; private set; }
     public string? GraphicsUrl { get; private set; }
@@ -14,10 +14,10 @@ public class StaffMember
 
     protected StaffMember() { }
 
-    public StaffMember(Guid salonProfileId, string fullName, string? title, string? graphicsUrl, string? workingHours = null)
+    public StaffMember(Guid salonId, string fullName, string? title, string? graphicsUrl, string? workingHours = null)
     {
         Id = Guid.NewGuid();
-        SalonProfileId = salonProfileId;
+        SalonId = salonId;
         FullName = fullName;
         Title = title;
         GraphicsUrl = graphicsUrl;

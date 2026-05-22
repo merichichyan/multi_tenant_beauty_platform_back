@@ -13,16 +13,16 @@ public class TenantRepository : ITenantRepository
         _context = context;
     }
 
-    public async Task<SpecialistProfile> AddSpecialistAsync(SpecialistProfile specialist, CancellationToken cancellationToken = default)
+    public async Task<Specialist> AddSpecialistAsync(Specialist specialist, CancellationToken cancellationToken = default)
     {
-        await _context.SpecialistProfiles.AddAsync(specialist, cancellationToken);
+        await _context.Specialists.AddAsync(specialist, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return specialist;
     }
 
-    public async Task<SalonProfile> AddSalonAsync(SalonProfile salon, CancellationToken cancellationToken = default)
+    public async Task<Salon> AddSalonAsync(Salon salon, CancellationToken cancellationToken = default)
     {
-        await _context.SalonProfiles.AddAsync(salon, cancellationToken);
+        await _context.Salons.AddAsync(salon, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return salon;
     }

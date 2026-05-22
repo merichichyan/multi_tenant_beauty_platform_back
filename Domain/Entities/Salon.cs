@@ -1,9 +1,7 @@
 namespace multi_tenant_beauty_platform_back.Domain.Entities;
 
-public class SalonProfile
+public class Salon : User
 {
-    public Guid Id { get; private set; }
-    public Guid UserId { get; private set; }
     public string SalonName { get; private set; } = string.Empty;
     public string Address { get; private set; } = string.Empty;
     public double? Latitude { get; private set; }
@@ -17,12 +15,12 @@ public class SalonProfile
     private readonly List<StaffMember> _staffMembers = new();
     public IReadOnlyCollection<StaffMember> StaffMembers => _staffMembers.AsReadOnly();
 
-    protected SalonProfile() { }
+    protected Salon() : base() { }
 
-    public SalonProfile(Guid userId, string salonName, string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
+    public Salon(string email, string passwordHash, string salonName, string role, string? phone, string? deviceId,
+        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
+        : base(email, passwordHash, salonName, role, phone, null, null, deviceId)
     {
-        Id = Guid.NewGuid();
-        UserId = userId;
         SalonName = salonName;
         Address = address;
         Latitude = latitude;

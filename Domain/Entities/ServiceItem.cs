@@ -3,7 +3,7 @@ namespace multi_tenant_beauty_platform_back.Domain.Entities;
 public class ServiceItem
 {
     public Guid Id { get; private set; }
-    public Guid? SpecialistProfileId { get; private set; }
+    public Guid? SpecialistId { get; private set; }
     public Guid? StaffMemberId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string Category { get; private set; } = string.Empty;
@@ -12,14 +12,14 @@ public class ServiceItem
 
     protected ServiceItem() { }
 
-    public ServiceItem(string name, string category, decimal price, int durationMinutes, Guid? specialistProfileId = null, Guid? staffMemberId = null)
+    public ServiceItem(string name, string category, decimal price, int durationMinutes, Guid? specialistId = null, Guid? staffMemberId = null)
     {
         Id = Guid.NewGuid();
         Name = name;
         Category = category;
         Price = price;
         DurationMinutes = durationMinutes;
-        SpecialistProfileId = specialistProfileId;
+        SpecialistId = specialistId;
         StaffMemberId = staffMemberId;
     }
 }

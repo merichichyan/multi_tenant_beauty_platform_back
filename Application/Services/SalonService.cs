@@ -24,20 +24,13 @@ public class SalonService : ISalonService
 
         var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, ct);
 
-        // Batch-fetch owner names for all salons in one query
-        var userIds = items.Select(s => s.UserId).Distinct().ToList();
-        var userNames = await _context.Users
-            .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.FullName })
-            .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
-
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
 
         var dtos = items.Select(s => new SalonListItemDto
         {
             Id = s.Id,
-            UserId = s.UserId,
-            OwnerFullName = userNames.TryGetValue(s.UserId, out var name) ? name : string.Empty,
+            UserId = s.Id,
+            OwnerFullName = s.FullName,
             SalonName = s.SalonName,
             Address = s.Address,
             Latitude = s.Latitude,
@@ -82,16 +75,11 @@ public class SalonService : ISalonService
         var salon = await _repository.GetByIdAsync(id, ct);
         if (salon is null) return null;
 
-        var user = await _context.Users
-            .Where(u => u.Id == salon.UserId)
-            .Select(u => new { u.FullName })
-            .FirstOrDefaultAsync(ct);
-
         return new SalonListItemDto
         {
             Id = salon.Id,
-            UserId = salon.UserId,
-            OwnerFullName = user?.FullName ?? string.Empty,
+            UserId = salon.Id,
+            OwnerFullName = salon.FullName,
             SalonName = salon.SalonName,
             Address = salon.Address,
             Latitude = salon.Latitude,

@@ -1,9 +1,7 @@
 namespace multi_tenant_beauty_platform_back.Domain.Entities;
 
-public class SpecialistProfile
+public class Specialist : User
 {
-    public Guid Id { get; private set; }
-    public Guid UserId { get; private set; }
     public string Address { get; private set; } = string.Empty;
     public double? Latitude { get; private set; }
     public double? Longitude { get; private set; }
@@ -16,12 +14,12 @@ public class SpecialistProfile
     private readonly List<ServiceItem> _services = new();
     public IReadOnlyCollection<ServiceItem> Services => _services.AsReadOnly();
 
-    protected SpecialistProfile() { }
+    protected Specialist() : base() { }
 
-    public SpecialistProfile(Guid userId, string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
+    public Specialist(string email, string passwordHash, string fullName, string role, string? phone, string? deviceId,
+        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
+        : base(email, passwordHash, fullName, role, phone, null, null, deviceId)
     {
-        Id = Guid.NewGuid();
-        UserId = userId;
         Address = address;
         Latitude = latitude;
         Longitude = longitude;

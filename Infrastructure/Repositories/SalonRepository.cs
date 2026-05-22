@@ -14,10 +14,10 @@ public class SalonRepository : ISalonRepository
         _context = context;
     }
 
-    public async Task<(IEnumerable<SalonProfile> Items, int TotalCount)> GetPagedAsync(
+    public async Task<(IEnumerable<Salon> Items, int TotalCount)> GetPagedAsync(
         int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        var query = _context.SalonProfiles
+        var query = _context.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
             .AsNoTracking();
@@ -32,9 +32,9 @@ public class SalonRepository : ISalonRepository
         return (items, totalCount);
     }
 
-    public async Task<SalonProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Salon?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.SalonProfiles
+        return await _context.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
             .AsNoTracking()

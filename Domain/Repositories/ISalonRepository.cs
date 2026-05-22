@@ -4,6 +4,6 @@ namespace multi_tenant_beauty_platform_back.Domain.Repositories;
 
 public interface ISalonRepository
 {
-    Task<(IEnumerable<SalonProfile> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
-    Task<SalonProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<Salon> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<Salon?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 }

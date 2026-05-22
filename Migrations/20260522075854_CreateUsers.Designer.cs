@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
@@ -11,9 +12,11 @@ using multi_tenant_beauty_platform_back.Infrastructure.Data;
 namespace multi_tenant_beauty_platform_back.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522075854_CreateUsers")]
+    partial class CreateUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,6 +68,54 @@ namespace multi_tenant_beauty_platform_back.Migrations
                     b.ToTable("OnboardingSubmissions");
                 });
 
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SalonProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("OperatingHours")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PreferredColors")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SalonName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("SocialMedias")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("SalonProfiles");
+                });
+
             modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.ServiceCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -103,7 +154,7 @@ namespace multi_tenant_beauty_platform_back.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
-                    b.Property<Guid?>("SpecialistId")
+                    b.Property<Guid?>("SpecialistProfileId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("StaffMemberId")
@@ -111,11 +162,54 @@ namespace multi_tenant_beauty_platform_back.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SpecialistId");
+                    b.HasIndex("SpecialistProfileId");
 
                     b.HasIndex("StaffMemberId");
 
                     b.ToTable("ServiceItems");
+                });
+
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SpecialistProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("PreferredColors")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SocialMedias")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WorkingHours")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("SpecialistProfiles");
                 });
 
             modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.StaffMember", b =>
@@ -132,7 +226,7 @@ namespace multi_tenant_beauty_platform_back.Migrations
                     b.Property<string>("GraphicsUrl")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("SalonId")
+                    b.Property<Guid>("SalonProfileId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -143,7 +237,7 @@ namespace multi_tenant_beauty_platform_back.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SalonId");
+                    b.HasIndex("SalonProfileId");
 
                     b.ToTable("StaffMembers");
                 });
@@ -200,86 +294,22 @@ namespace multi_tenant_beauty_platform_back.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-
-                    b.UseTpcMappingStrategy();
                 });
 
-            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.Salon", b =>
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SalonProfile", b =>
                 {
-                    b.HasBaseType("multi_tenant_beauty_platform_back.Domain.Entities.User");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("OperatingHours")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PreferredColors")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SalonName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<string>("SocialMedias")
-                        .HasColumnType("text");
-
-                    b.ToTable("Salons", (string)null);
-                });
-
-            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.Specialist", b =>
-                {
-                    b.HasBaseType("multi_tenant_beauty_platform_back.Domain.Entities.User");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("PreferredColors")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SocialMedias")
-                        .HasColumnType("text");
-
-                    b.Property<string>("WorkingHours")
-                        .HasColumnType("text");
-
-                    b.ToTable("Specialists", (string)null);
+                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.User", null)
+                        .WithOne("SalonProfile")
+                        .HasForeignKey("multi_tenant_beauty_platform_back.Domain.Entities.SalonProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.ServiceItem", b =>
                 {
-                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.Specialist", null)
+                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.SpecialistProfile", null)
                         .WithMany("Services")
-                        .HasForeignKey("SpecialistId")
+                        .HasForeignKey("SpecialistProfileId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.StaffMember", null)
@@ -288,28 +318,44 @@ namespace multi_tenant_beauty_platform_back.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.StaffMember", b =>
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SpecialistProfile", b =>
                 {
-                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.Salon", null)
-                        .WithMany("StaffMembers")
-                        .HasForeignKey("SalonId")
+                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.User", null)
+                        .WithOne("SpecialistProfile")
+                        .HasForeignKey("multi_tenant_beauty_platform_back.Domain.Entities.SpecialistProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.StaffMember", b =>
                 {
-                    b.Navigation("Services");
+                    b.HasOne("multi_tenant_beauty_platform_back.Domain.Entities.SalonProfile", null)
+                        .WithMany("StaffMembers")
+                        .HasForeignKey("SalonProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.Salon", b =>
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SalonProfile", b =>
                 {
                     b.Navigation("StaffMembers");
                 });
 
-            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.Specialist", b =>
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.SpecialistProfile", b =>
                 {
                     b.Navigation("Services");
+                });
+
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.StaffMember", b =>
+                {
+                    b.Navigation("Services");
+                });
+
+            modelBuilder.Entity("multi_tenant_beauty_platform_back.Domain.Entities.User", b =>
+                {
+                    b.Navigation("SalonProfile");
+
+                    b.Navigation("SpecialistProfile");
                 });
 #pragma warning restore 612, 618
         }

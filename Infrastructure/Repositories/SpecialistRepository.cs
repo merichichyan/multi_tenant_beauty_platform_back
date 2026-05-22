@@ -14,10 +14,10 @@ public class SpecialistRepository : ISpecialistRepository
         _context = context;
     }
 
-    public async Task<(IEnumerable<SpecialistProfile> Items, int TotalCount)> GetPagedAsync(
+    public async Task<(IEnumerable<Specialist> Items, int TotalCount)> GetPagedAsync(
         int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        var query = _context.SpecialistProfiles
+        var query = _context.Specialists
             .Include(s => s.Services)
             .AsNoTracking();
 
@@ -31,9 +31,9 @@ public class SpecialistRepository : ISpecialistRepository
         return (items, totalCount);
     }
 
-    public async Task<SpecialistProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Specialist?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.SpecialistProfiles
+        return await _context.Specialists
             .Include(s => s.Services)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);

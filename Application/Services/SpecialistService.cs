@@ -24,20 +24,13 @@ public class SpecialistService : ISpecialistService
 
         var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, ct);
 
-        // Batch-fetch owner names for all specialists in one query
-        var userIds = items.Select(s => s.UserId).Distinct().ToList();
-        var userNames = await _context.Users
-            .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.FullName })
-            .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
-
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
 
         var dtos = items.Select(s => new SpecialistListItemDto
         {
             Id = s.Id,
-            UserId = s.UserId,
-            FullName = userNames.TryGetValue(s.UserId, out var name) ? name : string.Empty,
+            UserId = s.Id,
+            FullName = s.FullName,
             Address = s.Address,
             Latitude = s.Latitude,
             Longitude = s.Longitude,
@@ -73,16 +66,11 @@ public class SpecialistService : ISpecialistService
         var specialist = await _repository.GetByIdAsync(id, ct);
         if (specialist is null) return null;
 
-        var user = await _context.Users
-            .Where(u => u.Id == specialist.UserId)
-            .Select(u => new { u.FullName })
-            .FirstOrDefaultAsync(ct);
-
         return new SpecialistListItemDto
         {
             Id = specialist.Id,
-            UserId = specialist.UserId,
-            FullName = user?.FullName ?? string.Empty,
+            UserId = specialist.Id,
+            FullName = specialist.FullName,
             Address = specialist.Address,
             Latitude = specialist.Latitude,
             Longitude = specialist.Longitude,

@@ -15,67 +15,55 @@ public class ListingService : IListingService
 
     public async Task<IReadOnlyList<SpecialistListItemDto>> GetTopSpecialistsAsync(int count = 10, CancellationToken ct = default)
     {
-        var specialists = await _db.SpecialistProfiles
+        var specialists = await _db.Specialists
             .Include(sp => sp.Services)
-            .OrderByDescending(sp => sp.Id) // newest first until we have ratings
+            .OrderByDescending(sp => sp.Id)
             .Take(count)
-            .Join(
-                _db.Users,
-                sp => sp.UserId,
-                u => u.Id,
-                (sp, u) => new { sp, u }
-            )
             .ToListAsync(ct);
 
-        return specialists.Select(x => new SpecialistListItemDto(
-            Id: x.sp.Id,
-            UserId: x.sp.UserId,
-            FullName: x.u.FullName,
-            Address: x.sp.Address,
-            LogoUrl: x.sp.LogoUrl,
-            Description: x.sp.Description,
-            WorkingHours: x.sp.WorkingHours,
-            PreferredColors: x.sp.PreferredColors,
-            Services: x.sp.Services
-                .Select(s => new ServiceItemDto(s.Name, s.Category, s.Price, s.DurationMinutes))
+        return specialists.Select(s => new SpecialistListItemDto(
+            Id: s.Id,
+            UserId: s.Id,
+            FullName: s.FullName,
+            Address: s.Address,
+            LogoUrl: s.LogoUrl,
+            Description: s.Description,
+            WorkingHours: s.WorkingHours,
+            PreferredColors: s.PreferredColors,
+            Services: s.Services
+                .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes))
                 .ToList()
                 .AsReadOnly(),
-            AverageRating: null,   // placeholder until ratings feature exists
+            AverageRating: null,
             ReviewCount: 0
         )).ToList().AsReadOnly();
     }
 
     public async Task<IReadOnlyList<SalonListItemDto>> GetTopSalonsAsync(int count = 10, CancellationToken ct = default)
     {
-        var salons = await _db.SalonProfiles
+        var salons = await _db.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
             .OrderByDescending(s => s.Id)
             .Take(count)
-            .Join(
-                _db.Users,
-                s => s.UserId,
-                u => u.Id,
-                (s, u) => new { s, u }
-            )
             .ToListAsync(ct);
 
-        return salons.Select(x => new SalonListItemDto(
-            Id: x.s.Id,
-            UserId: x.s.UserId,
-            SalonName: x.s.SalonName,
-            Address: x.s.Address,
-            LogoUrl: x.s.LogoUrl,
-            Description: x.s.Description,
-            OperatingHours: x.s.OperatingHours,
-            PreferredColors: x.s.PreferredColors,
-            StaffMembers: x.s.StaffMembers
+        return salons.Select(s => new SalonListItemDto(
+            Id: s.Id,
+            UserId: s.Id,
+            SalonName: s.SalonName,
+            Address: s.Address,
+            LogoUrl: s.LogoUrl,
+            Description: s.Description,
+            OperatingHours: s.OperatingHours,
+            PreferredColors: s.PreferredColors,
+            StaffMembers: s.StaffMembers
                 .Select(sm => new StaffMemberDto(
                     sm.FullName,
                     sm.Title ?? string.Empty,
                     sm.GraphicsUrl,
                     sm.Services
-                        .Select(s => new ServiceItemDto(s.Name, s.Category, s.Price, s.DurationMinutes))
+                        .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes))
                         .ToList()
                         .AsReadOnly()
                 ))

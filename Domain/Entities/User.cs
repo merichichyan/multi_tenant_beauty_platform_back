@@ -15,9 +15,6 @@ public class User
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    public SpecialistProfile? SpecialistProfile { get; private set; }
-    public SalonProfile? SalonProfile { get; private set; }
-
     protected User() { }
 
     public User(string email, string passwordHash, string fullName, string role, string? phone = null, string? gender = null, DateTime? birthday = null, string? deviceId = null)
@@ -45,15 +42,5 @@ public class User
     {
         Role = role;
         UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void SetSpecialistProfile(SpecialistProfile profile)
-    {
-        SpecialistProfile = profile;
-    }
-
-    public void SetSalonProfile(SalonProfile profile)
-    {
-        SalonProfile = profile;
     }
 }

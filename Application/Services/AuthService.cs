@@ -73,10 +73,13 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.FullName, request.Role.ToLower().Trim(), request.Phone, null, null, request.DeviceId);
-
-        var specialistProfile = new SpecialistProfile(
-            user.Id,
+        var specialist = new Specialist(
+            request.Email,
+            passwordHash,
+            request.FullName,
+            request.Role.ToLower().Trim(),
+            request.Phone,
+            request.DeviceId,
             request.Address,
             request.Latitude,
             request.Longitude,
@@ -91,13 +94,11 @@ public class AuthService : IAuthService
         {
             foreach (var s in request.Services)
             {
-                specialistProfile.AddService(new ServiceItem(s.Name, s.Category, s.Price, s.DurationMinutes, specialistProfileId: specialistProfile.Id));
+                specialist.AddService(new ServiceItem(s.Name, s.Category, s.Price, s.DurationMinutes, specialistId: specialist.Id));
             }
         }
 
-        user.SetSpecialistProfile(specialistProfile);
-
-        var savedUser = await _userRepository.AddAsync(user, cancellationToken);
+        var savedUser = await _userRepository.AddAsync(specialist, cancellationToken);
 
         return new RegisterResponseDto(savedUser.Id, savedUser.IsOnboardingCompleted);
     }
@@ -116,11 +117,13 @@ public class AuthService : IAuthService
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.SalonName, request.Role.ToLower().Trim(), request.Phone, null, null, request.DeviceId);
-
-        var salonProfile = new SalonProfile(
-            user.Id,
+        var salon = new Salon(
+            request.Email,
+            passwordHash,
             request.SalonName,
+            request.Role.ToLower().Trim(),
+            request.Phone,
+            request.DeviceId,
             request.Address,
             request.Latitude,
             request.Longitude,
@@ -135,7 +138,7 @@ public class AuthService : IAuthService
         {
             foreach (var sm in request.StaffMembers)
             {
-                var staffMember = new StaffMember(salonProfile.Id, sm.FullName, sm.Title, sm.GraphicsUrl);
+                var staffMember = new StaffMember(salon.Id, sm.FullName, sm.Title, sm.GraphicsUrl);
                 if (sm.Services != null)
                 {
                     foreach (var s in sm.Services)
@@ -143,13 +146,11 @@ public class AuthService : IAuthService
                         staffMember.AddService(new ServiceItem(s.Name, s.Category, s.Price, s.DurationMinutes, staffMemberId: staffMember.Id));
                     }
                 }
-                salonProfile.AddStaffMember(staffMember);
+                salon.AddStaffMember(staffMember);
             }
         }
 
-        user.SetSalonProfile(salonProfile);
-
-        var savedUser = await _userRepository.AddAsync(user, cancellationToken);
+        var savedUser = await _userRepository.AddAsync(salon, cancellationToken);
 
         return new RegisterResponseDto(savedUser.Id, savedUser.IsOnboardingCompleted);
     }
