@@ -13,6 +13,9 @@ public class SpecialistListItemDto
     public string? WorkingHours { get; set; }
     public string? SocialMedias { get; set; }
     public string? PreferredColors { get; set; }
+    public double Rating { get; set; }
+    public decimal StartingPrice { get; set; }
+    public string AvailabilityStatus { get; set; } = string.Empty;
     public List<ServiceItemDto> Services { get; set; } = [];
 }
 

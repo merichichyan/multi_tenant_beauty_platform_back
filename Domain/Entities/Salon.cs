@@ -11,6 +11,9 @@ public class Salon : User
     public string? LogoUrl { get; private set; }
     public string? PreferredColors { get; private set; }
     public string? OperatingHours { get; private set; }
+    public double Rating { get; private set; } = 4.5;
+    public decimal StartingPrice { get; private set; } = 50;
+    public string AvailabilityStatus { get; private set; } = "AVAILABLE TODAY";
 
     private readonly List<StaffMember> _staffMembers = new();
     public IReadOnlyCollection<StaffMember> StaffMembers => _staffMembers.AsReadOnly();
@@ -18,7 +21,8 @@ public class Salon : User
     protected Salon() : base() { }
 
     public Salon(string email, string passwordHash, string salonName, string role, string? phone, string? deviceId,
-        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
+        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours,
+        double rating = 4.5, decimal startingPrice = 50, string availabilityStatus = "AVAILABLE TODAY")
         : base(email, passwordHash, salonName, role, phone, null, null, deviceId)
     {
         SalonName = salonName;
@@ -30,6 +34,9 @@ public class Salon : User
         LogoUrl = logoUrl;
         PreferredColors = preferredColors;
         OperatingHours = operatingHours;
+        Rating = rating;
+        StartingPrice = startingPrice;
+        AvailabilityStatus = availabilityStatus;
     }
 
     public void AddStaffMember(StaffMember staffMember)

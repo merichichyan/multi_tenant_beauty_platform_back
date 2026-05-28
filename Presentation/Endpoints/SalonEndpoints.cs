@@ -16,8 +16,18 @@ public static class SalonEndpoints
             var result = await service.GetPagedAsync(page, ct);
             return Results.Ok(result);
         })
-        .WithSummary("Get paginated list of salons (10 per page)")
-        .WithDescription("Returns salons with their staff members and services. Pass ?page=1, ?page=2, etc.");
+        .WithSummary("Get paginated list of salons (10 per page)");
+
+        group.MapGet("/closest", async (double? latitude, double? longitude, int? limit, Guid? categoryId, ISalonService service, CancellationToken ct) =>
+        {
+            double lat = latitude ?? 40.1792;
+            double lon = longitude ?? 44.5152;
+            int lim = limit ?? 3;
+            var result = await service.GetClosestAsync(lat, lon, lim, categoryId, ct);
+            return Results.Ok(result);
+        })
+        .WithSummary("Get closest salons")
+        .WithDescription("Returns closest salons using distance from latitude and longitude. Defaults to Yerevan (40.1792, 44.5152).");
 
         group.MapGet("/{id:guid}", async (Guid id, ISalonService service, CancellationToken ct) =>
         {

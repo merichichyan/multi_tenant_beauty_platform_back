@@ -10,6 +10,9 @@ public class Specialist : User
     public string? LogoUrl { get; private set; }
     public string? PreferredColors { get; private set; }
     public string? WorkingHours { get; private set; }
+    public double Rating { get; private set; } = 4.5;
+    public decimal StartingPrice { get; private set; } = 40;
+    public string AvailabilityStatus { get; private set; } = "AVAILABLE TODAY";
 
     private readonly List<ServiceItem> _services = new();
     public IReadOnlyCollection<ServiceItem> Services => _services.AsReadOnly();
@@ -17,7 +20,8 @@ public class Specialist : User
     protected Specialist() : base() { }
 
     public Specialist(string email, string passwordHash, string fullName, string role, string? phone, string? deviceId,
-        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
+        string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours,
+        double rating = 4.5, decimal startingPrice = 40, string availabilityStatus = "AVAILABLE TODAY")
         : base(email, passwordHash, fullName, role, phone, null, null, deviceId)
     {
         Address = address;
@@ -28,6 +32,9 @@ public class Specialist : User
         LogoUrl = logoUrl;
         PreferredColors = preferredColors;
         WorkingHours = workingHours;
+        Rating = rating;
+        StartingPrice = startingPrice;
+        AvailabilityStatus = availabilityStatus;
     }
 
     public void AddService(ServiceItem service)

@@ -19,6 +19,24 @@ public static class SpecialistEndpoints
         .WithSummary("Get paginated list of specialists (10 per page)")
         .WithDescription("Returns specialists with their services. Pass ?page=1, ?page=2, etc.");
 
+        group.MapGet("/featured", async (ISpecialistService service, CancellationToken ct) =>
+        {
+            var result = await service.GetFeaturedAsync(ct);
+            return Results.Ok(result);
+        })
+        .WithSummary("Get featured specialists sorted by rating");
+
+        group.MapGet("/closest", async (double? latitude, double? longitude, int? limit, Guid? categoryId, ISpecialistService service, CancellationToken ct) =>
+        {
+            double lat = latitude ?? 40.1792;
+            double lon = longitude ?? 44.5152;
+            int lim = limit ?? 3;
+            var result = await service.GetClosestAsync(lat, lon, lim, categoryId, ct);
+            return Results.Ok(result);
+        })
+        .WithSummary("Get closest specialists")
+        .WithDescription("Returns closest specialists using distance from latitude and longitude. Defaults to Yerevan (40.1792, 44.5152).");
+
         group.MapGet("/{id:guid}", async (Guid id, ISpecialistService service, CancellationToken ct) =>
         {
             var result = await service.GetByIdAsync(id, ct);

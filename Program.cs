@@ -130,19 +130,292 @@ app.MapListingEndpoints();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var usersCount = context.Users.Count();
-    Console.WriteLine($"Users Count: {usersCount}");
-    if (!context.ServiceCategories.Any())
+    
+    try
     {
-        context.ServiceCategories.AddRange(
-            new ServiceCategory("Hair"),
-            new ServiceCategory("Nails"),
-            new ServiceCategory("Makeup"),
-            new ServiceCategory("Skincare"),
-            new ServiceCategory("Massage")
-        );
-        context.SaveChanges();
-        Console.WriteLine("Seeded 5 service categories.");
+        var usersCount = context.Users.Count();
+        Console.WriteLine($"Users Count: {usersCount}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database not initialized or needs migration: {ex.Message}");
+    }
+
+    try
+    {
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            Console.WriteLine("Pending migrations found. Seeding will run after migrations are applied.");
+        }
+        else
+        {
+            var existingCategories = context.ServiceCategories.ToList();
+            if (!existingCategories.Any())
+            {
+                context.ServiceCategories.AddRange(
+                    new ServiceCategory("Մազեր", "Волосы", "Hair"),
+                    new ServiceCategory("Եղունգներ", "Ногти", "Nails"),
+                    new ServiceCategory("Դիմահարդարում", "Макияж", "Makeup"),
+                    new ServiceCategory("Մաշկի խնամք", "Уход за кожей", "Skincare"),
+                    new ServiceCategory("Մերսում", "Массаж", "Massage")
+                );
+                context.SaveChanges();
+                Console.WriteLine("Seeded 5 service categories.");
+            }
+            else
+            {
+                var updated = false;
+                foreach (var cat in existingCategories)
+                {
+                    if (string.IsNullOrWhiteSpace(cat.NameHy) || string.IsNullOrWhiteSpace(cat.NameRu) || string.IsNullOrWhiteSpace(cat.NameEn))
+                    {
+                        var name = (new[] { cat.NameEn, cat.NameRu, cat.NameHy }.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)) ?? "").Trim();
+                        if (name.Equals("Hair", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cat.Update("Մազեր", "Волосы", "Hair");
+                            updated = true;
+                        }
+                        else if (name.Equals("Nails", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cat.Update("Եղունգներ", "Ногти", "Nails");
+                            updated = true;
+                        }
+                        else if (name.Equals("Makeup", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cat.Update("Դիմահարդարում", "Макияж", "Makeup");
+                            updated = true;
+                        }
+                        else if (name.Equals("Skincare", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cat.Update("Մաշկի խնամք", "Уход за кожей", "Skincare");
+                            updated = true;
+                        }
+                        else if (name.Equals("Massage", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cat.Update("Մերսում", "Массаж", "Massage");
+                            updated = true;
+                        }
+                    }
+                }
+                if (updated)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine("Updated existing service categories with localized translations.");
+                }
+            }
+
+            if (!context.Salons.Any())
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123");
+                var salon1 = new Salon(
+                    email: "maison@noire.com",
+                    passwordHash: passwordHash,
+                    salonName: "Maison Noire",
+                    role: "Salon",
+                    phone: "+37499111222",
+                    deviceId: "salon_device_1",
+                    address: "10 Abovyan St, Yerevan",
+                    latitude: 40.1792,
+                    longitude: 44.5152,
+                    description: "Luxury hair & styling services in the heart of Yerevan.",
+                    socialMedias: "instagram.com/maisonnoire",
+                    logoUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&auto=format&fit=crop",
+                    preferredColors: "#1A1A1A,#D4AF37",
+                    operatingHours: "10:00 - 20:00",
+                    rating: 4.9,
+                    startingPrice: 65,
+                    availabilityStatus: "AVAILABLE TODAY"
+                );
+                
+                var salon2 = new Salon(
+                    email: "aura@veil.com",
+                    passwordHash: passwordHash,
+                    salonName: "Aura & Veil",
+                    role: "Salon",
+                    phone: "+37499333444",
+                    deviceId: "salon_device_2",
+                    address: "24 Tumanyan St, Yerevan",
+                    latitude: 40.1812,
+                    longitude: 44.5182,
+                    description: "A serene space dedicated to premium facials and skin wellness.",
+                    socialMedias: "instagram.com/auraveil",
+                    logoUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop",
+                    preferredColors: "#0F172A,#F59E0B",
+                    operatingHours: "09:00 - 21:00",
+                    rating: 5.0,
+                    startingPrice: 90,
+                    availabilityStatus: "3 SLOTS LEFT"
+                );
+
+                var salon3 = new Salon(
+                    email: "sage@studio.com",
+                    passwordHash: passwordHash,
+                    salonName: "Sage Studio",
+                    role: "Salon",
+                    phone: "+37499555666",
+                    deviceId: "salon_device_3",
+                    address: "5 Saryan St, Yerevan",
+                    latitude: 40.1752,
+                    longitude: 44.5102,
+                    description: "Organic nails and holistic self-care studio.",
+                    socialMedias: "instagram.com/sagestudio",
+                    logoUrl: "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=500&auto=format&fit=crop",
+                    preferredColors: "#022C22,#10B981",
+                    operatingHours: "11:00 - 19:00",
+                    rating: 4.7,
+                    startingPrice: 55,
+                    availabilityStatus: "BOOK FOR TOMORROW"
+                );
+
+                context.Salons.AddRange(salon1, salon2, salon3);
+                context.SaveChanges();
+                Console.WriteLine("Seeded 3 premium salons.");
+            }
+
+            var existingSalons = context.Salons.Include(s => s.StaffMembers).ToList();
+            if (existingSalons.Any() && !context.StaffMembers.Any())
+            {
+                foreach (var salon in existingSalons)
+                {
+                    if (salon.SalonName.Contains("Maison Noire"))
+                    {
+                        var staff1 = new StaffMember(salon.Id, "Emily Watson", "Senior Hair Stylist", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150");
+                        staff1.AddService(new ServiceItem("Balayage & Hair Cut", "Hair", 120, 120, staffMemberId: staff1.Id));
+                        staff1.AddService(new ServiceItem("Blow Dry & Styling", "Hair", 40, 45, staffMemberId: staff1.Id));
+                        context.StaffMembers.Add(staff1);
+                    }
+                    else if (salon.SalonName.Contains("Aura & Veil"))
+                    {
+                        var staff2 = new StaffMember(salon.Id, "Chloe Bennet", "Lead Esthetician", "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150");
+                        staff2.AddService(new ServiceItem("HydraFacial Treatment", "Skincare", 95, 60, staffMemberId: staff2.Id));
+                        staff2.AddService(new ServiceItem("Aromatherapy Massage", "Massage", 80, 60, staffMemberId: staff2.Id));
+                        context.StaffMembers.Add(staff2);
+                    }
+                    else if (salon.SalonName.Contains("Sage Studio"))
+                    {
+                        var staff3 = new StaffMember(salon.Id, "Bella Thorne", "Nail Artist", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150");
+                        staff3.AddService(new ServiceItem("Classic Gel Manicure", "Nails", 45, 45, staffMemberId: staff3.Id));
+                        staff3.AddService(new ServiceItem("Luxury Spa Pedicure", "Nails", 60, 60, staffMemberId: staff3.Id));
+                        context.StaffMembers.Add(staff3);
+                    }
+                }
+                context.SaveChanges();
+                Console.WriteLine("Upgraded existing salons with staff members & services.");
+            }
+
+            var existingSpecs = context.Specialists.Include(s => s.Services).ToList();
+            if (existingSpecs.Any())
+            {
+                var updated = false;
+                foreach (var spec in existingSpecs)
+                {
+                    if (!spec.Services.Any())
+                    {
+                        if (spec.FullName.Contains("Alex Mercer"))
+                        {
+                            context.ServiceItems.Add(new ServiceItem("Men's Haircut & Styling", "Hair", 45, 45, specialistId: spec.Id));
+                            context.ServiceItems.Add(new ServiceItem("Beard Trim & Clean Shave", "Hair", 25, 30, specialistId: spec.Id));
+                            updated = true;
+                        }
+                        else if (spec.FullName.Contains("Maria Gonzalez"))
+                        {
+                            context.ServiceItems.Add(new ServiceItem("Custom Glow Facial", "Skincare", 80, 60, specialistId: spec.Id));
+                            context.ServiceItems.Add(new ServiceItem("Chemical Peel Therapy", "Skincare", 120, 45, specialistId: spec.Id));
+                            updated = true;
+                        }
+                        else if (spec.FullName.Contains("Sophia Loren"))
+                        {
+                            context.ServiceItems.Add(new ServiceItem("Gel Extension Full Set", "Nails", 70, 90, specialistId: spec.Id));
+                            context.ServiceItems.Add(new ServiceItem("Premium Spa Manicure", "Nails", 50, 45, specialistId: spec.Id));
+                            updated = true;
+                        }
+                    }
+                }
+                if (updated)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine("Upgraded existing specialists with services.");
+                }
+            }
+
+            if (!context.Specialists.Any())
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword("Password123");
+                var spec1 = new Specialist(
+                    email: "alex@mercer.com",
+                    passwordHash: passwordHash,
+                    fullName: "Alex Mercer",
+                    role: "Specialist",
+                    phone: "+37499777888",
+                    deviceId: "spec_device_1",
+                    address: "15 Sayat-Nova Ave, Yerevan",
+                    latitude: 40.1800,
+                    longitude: 44.5200,
+                    description: "Master Barber and Hair Stylist with 10+ years experience.",
+                    socialMedias: "instagram.com/alexmercer",
+                    logoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop",
+                    preferredColors: "#18181B,#F43F5E",
+                    workingHours: "10:00 - 18:00",
+                    rating: 4.95,
+                    startingPrice: 45,
+                    availabilityStatus: "AVAILABLE TODAY"
+                );
+                spec1.AddService(new ServiceItem("Men's Haircut & Styling", "Hair", 45, 45));
+                spec1.AddService(new ServiceItem("Beard Trim & Clean Shave", "Hair", 25, 30));
+
+                var spec2 = new Specialist(
+                    email: "maria@gonzalez.com",
+                    passwordHash: passwordHash,
+                    fullName: "Maria Gonzalez",
+                    role: "Specialist",
+                    phone: "+37499888999",
+                    deviceId: "spec_device_2",
+                    address: "3 Nalbandyan St, Yerevan",
+                    latitude: 40.1770,
+                    longitude: 44.5120,
+                    description: "Senior Medical Esthetician specializing in skin health.",
+                    socialMedias: "instagram.com/mariagonzalez",
+                    logoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop",
+                    preferredColors: "#1C1917,#D97706",
+                    workingHours: "09:00 - 17:00",
+                    rating: 4.88,
+                    startingPrice: 80,
+                    availabilityStatus: "2 SLOTS LEFT"
+                );
+                spec2.AddService(new ServiceItem("Custom Glow Facial", "Skincare", 80, 60));
+                spec2.AddService(new ServiceItem("Chemical Peel Therapy", "Skincare", 120, 45));
+
+                var spec3 = new Specialist(
+                    email: "sophia@loren.com",
+                    passwordHash: passwordHash,
+                    fullName: "Sophia Loren",
+                    role: "Specialist",
+                    phone: "+37499101010",
+                    deviceId: "spec_device_3",
+                    address: "12 Pushkin St, Yerevan",
+                    latitude: 40.1785,
+                    longitude: 44.5140,
+                    description: "Luxury Nail Artist doing gel extensions and complex nail art.",
+                    socialMedias: "instagram.com/sophialoren",
+                    logoUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&auto=format&fit=crop",
+                    preferredColors: "#27272A,#A855F7",
+                    workingHours: "11:00 - 20:00",
+                    rating: 4.98,
+                    startingPrice: 50,
+                    availabilityStatus: "BOOK FOR TOMORROW"
+                );
+                spec3.AddService(new ServiceItem("Gel Extension Full Set", "Nails", 70, 90));
+                spec3.AddService(new ServiceItem("Premium Spa Manicure", "Nails", 50, 45));
+
+                context.Specialists.AddRange(spec1, spec2, spec3);
+                context.SaveChanges();
+                Console.WriteLine("Seeded 3 featured specialists.");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error occurred during database seeding: {ex.Message}\n{ex.StackTrace}");
     }
 }
 

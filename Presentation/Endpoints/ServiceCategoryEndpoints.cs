@@ -11,16 +11,18 @@ public static class ServiceCategoryEndpoints
         var group = app.MapGroup("/api/service-categories")
                        .WithTags("ServiceCategories");
 
-        group.MapGet("/", async (IServiceCategoryService service, CancellationToken ct) =>
+        group.MapGet("/", async (HttpContext httpContext, IServiceCategoryService service, CancellationToken ct) =>
         {
-            var result = await service.GetAllAsync(ct);
+            var lang = GetLanguage(httpContext);
+            var result = await service.GetAllAsync(lang, ct);
             return Results.Ok(result);
         })
         .WithSummary("Get all service categories");
 
-        group.MapGet("/{id:guid}", async (Guid id, IServiceCategoryService service, CancellationToken ct) =>
+        group.MapGet("/{id:guid}", async (Guid id, HttpContext httpContext, IServiceCategoryService service, CancellationToken ct) =>
         {
-            var result = await service.GetByIdAsync(id, ct);
+            var lang = GetLanguage(httpContext);
+            var result = await service.GetByIdAsync(id, lang, ct);
             return result != null ? Results.Ok(result) : Results.NotFound();
         })
         .WithSummary("Get service category by ID");
@@ -47,5 +49,27 @@ public static class ServiceCategoryEndpoints
         .WithSummary("Delete a service category");
 
         return app;
+    }
+
+    private static string GetLanguage(HttpContext context)
+    {
+        if (context.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+        {
+            var lang = langVal.ToString().ToLower();
+            if (lang == "hy" || lang == "ru" || lang == "en")
+            {
+                return lang;
+            }
+        }
+
+        var acceptLanguage = context.Request.Headers["Accept-Language"].ToString();
+        if (!string.IsNullOrEmpty(acceptLanguage))
+        {
+            if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) return "hy";
+            if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) return "ru";
+            if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) return "en";
+        }
+
+        return "en";
     }
 }

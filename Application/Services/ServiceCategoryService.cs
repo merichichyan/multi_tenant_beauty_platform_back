@@ -13,25 +13,29 @@ public class ServiceCategoryService : IServiceCategoryService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<ServiceCategoryResponseDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<ServiceCategoryResponseDto>> GetAllAsync(string? lang = null, CancellationToken ct = default)
     {
         var categories = await _repository.GetAllAsync(ct);
-        return categories.Select(c => new ServiceCategoryResponseDto { Id = c.Id, Name = c.Name });
+        return categories.Select(c => MapToResponse(c, lang));
     }
 
-    public async Task<ServiceCategoryResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<ServiceCategoryResponseDto?> GetByIdAsync(Guid id, string? lang = null, CancellationToken ct = default)
     {
         var category = await _repository.GetByIdAsync(id, ct);
         if (category == null) return null;
         
-        return new ServiceCategoryResponseDto { Id = category.Id, Name = category.Name };
+        return MapToResponse(category, lang);
     }
 
     public async Task<ServiceCategoryResponseDto> CreateAsync(ServiceCategoryRequestDto dto, CancellationToken ct = default)
     {
-        var category = new ServiceCategory(dto.Name);
+        var nameHy = !string.IsNullOrWhiteSpace(dto.NameHy) ? dto.NameHy : (dto.Name ?? string.Empty);
+        var nameRu = !string.IsNullOrWhiteSpace(dto.NameRu) ? dto.NameRu : (dto.Name ?? string.Empty);
+        var nameEn = !string.IsNullOrWhiteSpace(dto.NameEn) ? dto.NameEn : (dto.Name ?? string.Empty);
+
+        var category = new ServiceCategory(nameHy, nameRu, nameEn);
         await _repository.AddAsync(category, ct);
-        return new ServiceCategoryResponseDto { Id = category.Id, Name = category.Name };
+        return MapToResponse(category, null);
     }
 
     public async Task<ServiceCategoryResponseDto?> UpdateAsync(Guid id, ServiceCategoryRequestDto dto, CancellationToken ct = default)
@@ -39,10 +43,14 @@ public class ServiceCategoryService : IServiceCategoryService
         var category = await _repository.GetByIdAsync(id, ct);
         if (category == null) return null;
 
-        category.Update(dto.Name);
+        var nameHy = !string.IsNullOrWhiteSpace(dto.NameHy) ? dto.NameHy : (dto.Name ?? string.Empty);
+        var nameRu = !string.IsNullOrWhiteSpace(dto.NameRu) ? dto.NameRu : (dto.Name ?? string.Empty);
+        var nameEn = !string.IsNullOrWhiteSpace(dto.NameEn) ? dto.NameEn : (dto.Name ?? string.Empty);
+
+        category.Update(nameHy, nameRu, nameEn);
         await _repository.UpdateAsync(category, ct);
         
-        return new ServiceCategoryResponseDto { Id = category.Id, Name = category.Name };
+        return MapToResponse(category, null);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
@@ -52,5 +60,31 @@ public class ServiceCategoryService : IServiceCategoryService
 
         await _repository.DeleteAsync(category, ct);
         return true;
+    }
+
+    private static ServiceCategoryResponseDto MapToResponse(ServiceCategory category, string? lang)
+    {
+        var name = lang?.ToLower() switch
+        {
+            "hy" => category.NameHy,
+            "ru" => category.NameRu,
+            "en" => category.NameEn,
+            _ => category.NameEn // Default fallback
+        };
+
+        if (string.IsNullOrEmpty(name))
+        {
+            name = !string.IsNullOrEmpty(category.NameEn) ? category.NameEn :
+                   (!string.IsNullOrEmpty(category.NameHy) ? category.NameHy : category.NameRu);
+        }
+
+        return new ServiceCategoryResponseDto
+        {
+            Id = category.Id,
+            Name = name,
+            NameHy = category.NameHy,
+            NameRu = category.NameRu,
+            NameEn = category.NameEn
+        };
     }
 }

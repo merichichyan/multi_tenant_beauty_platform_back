@@ -88,7 +88,9 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ServiceCategory>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.NameHy).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.NameRu).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.NameEn).IsRequired().HasMaxLength(100);
         });
     }
 }
