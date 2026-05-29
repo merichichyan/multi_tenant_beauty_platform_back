@@ -19,6 +19,7 @@ public class SpecialistRepository : ISpecialistRepository
     {
         var query = _context.Specialists
             .Include(s => s.Services)
+            .Where(s => s.Status == "Verified")
             .AsNoTracking();
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -35,6 +36,7 @@ public class SpecialistRepository : ISpecialistRepository
     {
         return await _context.Specialists
             .Include(s => s.Services)
+            .Where(s => s.Status == "Verified")
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }

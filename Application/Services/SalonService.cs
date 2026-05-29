@@ -119,6 +119,7 @@ public class SalonService : ISalonService
         var salons = await _context.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
+            .Where(s => s.Status == "Verified")
             .ToListAsync(ct);
 
         if (categoryId.HasValue)

@@ -100,6 +100,7 @@ public class SpecialistService : ISpecialistService
     {
         var specialists = await _context.Specialists
             .Include(s => s.Services)
+            .Where(s => s.Status == "Verified")
             .OrderByDescending(s => s.Rating)
             .Take(5)
             .ToListAsync(ct);
@@ -135,6 +136,7 @@ public class SpecialistService : ISpecialistService
     {
         var specialists = await _context.Specialists
             .Include(s => s.Services)
+            .Where(s => s.Status == "Verified")
             .ToListAsync(ct);
 
         if (categoryId.HasValue)

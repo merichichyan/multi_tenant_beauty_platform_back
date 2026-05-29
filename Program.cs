@@ -93,6 +93,7 @@ builder.Services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
 builder.Services.AddScoped<ISpecialistService, SpecialistService>();
 builder.Services.AddScoped<ISalonService, SalonService>();
 builder.Services.AddScoped<IListingService, ListingService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddCors(options =>
 {
@@ -126,6 +127,7 @@ app.MapServiceCategoryEndpoints();
 app.MapSpecialistEndpoints();
 app.MapSalonEndpoints();
 app.MapListingEndpoints();
+app.MapUserEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

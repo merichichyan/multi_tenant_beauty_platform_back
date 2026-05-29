@@ -11,6 +11,7 @@ public class User
     public string? Gender { get; private set; }
     public DateTime? Birthday { get; private set; }
     public string? DeviceId { get; private set; }
+    public string Status { get; private set; } = "Pending";
     public bool IsOnboardingCompleted { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
@@ -29,6 +30,7 @@ public class User
         Birthday = birthday;
         DeviceId = deviceId;
         IsOnboardingCompleted = false;
+        Status = role.Equals("user", StringComparison.OrdinalIgnoreCase) ? "Verified" : "Pending";
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -41,6 +43,12 @@ public class User
     public void UpdateRole(string role)
     {
         Role = role;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateStatus(string status)
+    {
+        Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
 }

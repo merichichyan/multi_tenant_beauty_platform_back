@@ -17,6 +17,7 @@ public class ListingService : IListingService
     {
         var specialists = await _db.Specialists
             .Include(sp => sp.Services)
+            .Where(sp => sp.Status == "Verified")
             .OrderByDescending(sp => sp.Id)
             .Take(count)
             .ToListAsync(ct);
@@ -44,6 +45,7 @@ public class ListingService : IListingService
         var salons = await _db.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
+            .Where(s => s.Status == "Verified")
             .OrderByDescending(s => s.Id)
             .Take(count)
             .ToListAsync(ct);
