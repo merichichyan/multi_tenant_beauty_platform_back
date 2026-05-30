@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<StaffMember> StaffMembers { get; set; }
     public DbSet<ServiceItem> ServiceItems { get; set; }
     public DbSet<ServiceCategory> ServiceCategories { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,6 +92,16 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.NameHy).IsRequired().HasMaxLength(100);
             entity.Property(e => e.NameRu).IsRequired().HasMaxLength(100);
             entity.Property(e => e.NameEn).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Booking>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SpecialistName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.ServiceName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Price);
+            entity.Property(e => e.TimeSlot).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.UserEmail).IsRequired().HasMaxLength(150);
         });
     }
 }

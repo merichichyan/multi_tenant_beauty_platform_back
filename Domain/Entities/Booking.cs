@@ -1,0 +1,35 @@
+using System;
+
+namespace multi_tenant_beauty_platform_back.Domain.Entities;
+
+public class Booking
+{
+    public Guid Id { get; private set; }
+    public Guid SpecialistId { get; private set; }
+    public string SpecialistName { get; private set; } = string.Empty;
+    public string ServiceName { get; private set; } = string.Empty;
+    public decimal Price { get; private set; }
+    public int DurationMinutes { get; private set; }
+    public DateTime BookingDate { get; private set; }
+    public string TimeSlot { get; private set; } = string.Empty;
+    public Guid UserId { get; private set; }
+    public string UserEmail { get; private set; } = string.Empty;
+    public DateTime CreatedAt { get; private set; }
+
+    protected Booking() { }
+
+    public Booking(Guid specialistId, string specialistName, string serviceName, decimal price, int durationMinutes, DateTime bookingDate, string timeSlot, Guid userId, string userEmail)
+    {
+        Id = Guid.NewGuid();
+        SpecialistId = specialistId;
+        SpecialistName = specialistName;
+        ServiceName = serviceName;
+        Price = price;
+        DurationMinutes = durationMinutes;
+        BookingDate = bookingDate;
+        TimeSlot = timeSlot;
+        UserId = userId;
+        UserEmail = userEmail.ToLowerInvariant().Trim();
+        CreatedAt = DateTime.UtcNow;
+    }
+}

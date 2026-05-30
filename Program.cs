@@ -7,6 +7,7 @@ using multi_tenant_beauty_platform_back.Application.Services;
 using multi_tenant_beauty_platform_back.Domain.Repositories;
 using multi_tenant_beauty_platform_back.Domain.Services;
 using multi_tenant_beauty_platform_back.Infrastructure.Authentication;
+using multi_tenant_beauty_platform_back.Infrastructure.BackgroundServices;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
 using multi_tenant_beauty_platform_back.Infrastructure.Repositories;
 using multi_tenant_beauty_platform_back.Presentation.Endpoints;
@@ -105,6 +106,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Background service: silently removes bookings older than 3 months every 24 h
+builder.Services.AddHostedService<BookingCleanupService>();
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -128,6 +132,7 @@ app.MapSpecialistEndpoints();
 app.MapSalonEndpoints();
 app.MapListingEndpoints();
 app.MapUserEndpoints();
+app.MapBookingEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
