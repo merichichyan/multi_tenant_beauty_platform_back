@@ -133,6 +133,7 @@ app.MapSalonEndpoints();
 app.MapListingEndpoints();
 app.MapUserEndpoints();
 app.MapBookingEndpoints();
+app.MapLetterEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
