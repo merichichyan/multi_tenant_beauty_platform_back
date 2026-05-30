@@ -51,4 +51,20 @@ public class User
         Status = status;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void UpdateProfile(string email, string fullName, string? phone, string? gender, DateTime? birthday)
+    {
+        Email = email.ToLowerInvariant().Trim();
+        FullName = fullName;
+        Phone = phone;
+        Gender = gender;
+        Birthday = birthday;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdatePasswordHash(string passwordHash)
+    {
+        PasswordHash = passwordHash;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

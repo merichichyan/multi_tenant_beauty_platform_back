@@ -41,4 +41,14 @@ public class Specialist : User
     {
         _services.Add(service);
     }
+
+    public void UpdateSpecialistProfile(string address, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
+    {
+        Address = address;
+        Description = description;
+        SocialMedias = socialMedias;
+        LogoUrl = logoUrl;
+        PreferredColors = preferredColors;
+        WorkingHours = workingHours;
+    }
 }

@@ -27,10 +27,22 @@ public static class UserEndpoints
             }
 
             string? logoUrl = null;
+            string? address = null;
+            string? description = null;
+            string? socialMedias = null;
+            string? preferredColors = null;
+            string? workingHours = null;
+            string? salonName = null;
+
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
             if (specialist != null)
             {
                 logoUrl = specialist.LogoUrl;
+                address = specialist.Address;
+                description = specialist.Description;
+                socialMedias = specialist.SocialMedias;
+                preferredColors = specialist.PreferredColors;
+                workingHours = specialist.WorkingHours;
             }
             else
             {
@@ -38,6 +50,12 @@ public static class UserEndpoints
                 if (salon != null)
                 {
                     logoUrl = salon.LogoUrl;
+                    address = salon.Address;
+                    description = salon.Description;
+                    socialMedias = salon.SocialMedias;
+                    preferredColors = salon.PreferredColors;
+                    workingHours = salon.OperatingHours;
+                    salonName = salon.SalonName;
                 }
             }
 
@@ -48,11 +66,111 @@ public static class UserEndpoints
                 email = user.Email,
                 role = user.Role,
                 status = user.Status,
-                logoUrl = logoUrl
+                phone = user.Phone,
+                gender = user.Gender,
+                birthday = user.Birthday,
+                logoUrl = logoUrl,
+                address = address,
+                description = description,
+                socialMedias = socialMedias,
+                preferredColors = preferredColors,
+                workingHours = workingHours,
+                salonName = salonName
             });
         })
         .RequireAuthorization()
         .WithSummary("Get current user profile info");
+
+        group.MapPut("/profile", async ([FromBody] UpdateProfileRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user == null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            // Check if email already in use by another user
+            var emailLower = request.Email.ToLowerInvariant().Trim();
+            var emailInUse = await context.Users.AnyAsync(u => u.Email == emailLower && u.Id != userId, ct);
+            if (emailInUse)
+            {
+                return Results.BadRequest(new { message = "Email is already registered by another account." });
+            }
+
+            // Base user updates
+            user.UpdateProfile(request.Email, request.FullName, request.Phone, request.Gender, request.Birthday);
+
+            // Specialist / Salon updates
+            var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
+            if (specialist != null)
+            {
+                specialist.UpdateSpecialistProfile(
+                    request.Address ?? string.Empty,
+                    request.Description,
+                    request.SocialMedias,
+                    request.LogoUrl,
+                    request.PreferredColors,
+                    request.WorkingHours
+                );
+            }
+            else
+            {
+                var salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == userId, ct);
+                if (salon != null)
+                {
+                    salon.UpdateSalonProfile(
+                        request.SalonName ?? request.FullName,
+                        request.Address ?? string.Empty,
+                        request.Description,
+                        request.SocialMedias,
+                        request.LogoUrl,
+                        request.PreferredColors,
+                        request.WorkingHours
+                    );
+                }
+            }
+
+            await context.SaveChangesAsync(ct);
+            return Results.Ok(new { message = "Profile updated successfully.", user });
+        })
+        .RequireAuthorization()
+        .WithSummary("Update logged-in user profile");
+
+        group.MapPut("/password", async ([FromBody] UpdatePasswordRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user == null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            // Verify current password matches
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                return Results.BadRequest(new { message = "Current password is incorrect." });
+            }
+
+            // Hash and update new password
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatePasswordHash(newPasswordHash);
+
+            await context.SaveChangesAsync(ct);
+            return Results.Ok(new { message = "Password updated successfully." });
+        })
+        .RequireAuthorization()
+        .WithSummary("Update logged-in user password");
 
         group.MapGet("/", async ([FromQuery] string? status, [FromQuery] int pageNumber, [FromQuery] int pageSize, IUserService userService, CancellationToken ct) =>
         {
@@ -84,3 +202,23 @@ public static class UserEndpoints
         return app;
     }
 }
+
+public record UpdateProfileRequest(
+    string Email,
+    string FullName,
+    string? Phone,
+    String? Gender,
+    DateTime? Birthday,
+    string? Address,
+    string? Description,
+    string? SocialMedias,
+    string? LogoUrl,
+    string? PreferredColors,
+    string? WorkingHours,
+    string? SalonName
+);
+
+public record UpdatePasswordRequest(
+    string CurrentPassword,
+    string NewPassword
+);

@@ -43,4 +43,15 @@ public class Salon : User
     {
         _staffMembers.Add(staffMember);
     }
+
+    public void UpdateSalonProfile(string salonName, string address, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
+    {
+        SalonName = salonName;
+        Address = address;
+        Description = description;
+        SocialMedias = socialMedias;
+        LogoUrl = logoUrl;
+        PreferredColors = preferredColors;
+        OperatingHours = operatingHours;
+    }
 }
