@@ -32,7 +32,7 @@ public class ListingService : IListingService
             WorkingHours: s.WorkingHours,
             PreferredColors: s.PreferredColors,
             Services: s.Services
-                .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes))
+                .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes, svc.IsActive))
                 .ToList()
                 .AsReadOnly(),
             AverageRating: null,
@@ -65,7 +65,7 @@ public class ListingService : IListingService
                     sm.Title ?? string.Empty,
                     sm.GraphicsUrl,
                     sm.Services
-                        .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes))
+                        .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes, svc.IsActive))
                         .ToList()
                         .AsReadOnly()
                 ))

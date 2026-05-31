@@ -1,6 +1,6 @@
 namespace multi_tenant_beauty_platform_back.Application.DTOs.Listing;
 
-public record ServiceItemDto(string Name, string Category, decimal Price, int DurationMinutes);
+public record ServiceItemDto(string Name, string Category, decimal Price, int DurationMinutes, bool IsActive = true);
 
 public record SpecialistListItemDto(
     Guid Id,

@@ -141,6 +141,7 @@ using (var scope = app.Services.CreateScope())
     
     try
     {
+        context.Database.ExecuteSqlRaw("UPDATE \"ServiceItems\" SET \"IsActive\" = true;");
         var usersCount = context.Users.Count();
         Console.WriteLine($"Users Count: {usersCount}");
     }

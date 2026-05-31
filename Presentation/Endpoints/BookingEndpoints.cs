@@ -74,7 +74,29 @@ public static class BookingEndpoints
                                         .Where(b => b.SpecialistId == specialistId)
                                         .ToListAsync(ct);
 
-            return Results.Ok(bookings);
+            // Look up user names for each booking
+            var userIds = bookings.Select(b => b.UserId).Distinct().ToList();
+            var users = await context.Users
+                                     .Where(u => userIds.Contains(u.Id))
+                                     .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
+
+            var result = bookings.Select(b => new
+            {
+                b.Id,
+                b.SpecialistId,
+                b.SpecialistName,
+                b.ServiceName,
+                b.Price,
+                b.DurationMinutes,
+                b.BookingDate,
+                b.TimeSlot,
+                b.UserId,
+                b.UserEmail,
+                b.CreatedAt,
+                UserName = users.TryGetValue(b.UserId, out var name) ? name : b.UserEmail
+            });
+
+            return Results.Ok(result);
         })
         .WithSummary("Get specialist bookings");
 

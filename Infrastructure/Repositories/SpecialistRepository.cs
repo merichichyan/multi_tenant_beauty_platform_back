@@ -36,7 +36,6 @@ public class SpecialistRepository : ISpecialistRepository
     {
         return await _context.Specialists
             .Include(s => s.Services)
-            .Where(s => s.Status == "Verified")
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }

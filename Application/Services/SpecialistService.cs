@@ -48,7 +48,8 @@ public class SpecialistService : ISpecialistService
                 Name = svc.Name,
                 Category = svc.Category,
                 Price = svc.Price,
-                DurationMinutes = svc.DurationMinutes
+                DurationMinutes = svc.DurationMinutes,
+                IsActive = svc.IsActive
             }).ToList()
         }).ToList();
 
@@ -91,7 +92,8 @@ public class SpecialistService : ISpecialistService
                 Name = svc.Name,
                 Category = svc.Category,
                 Price = svc.Price,
-                DurationMinutes = svc.DurationMinutes
+                DurationMinutes = svc.DurationMinutes,
+                IsActive = svc.IsActive
             }).ToList()
         };
     }
@@ -127,7 +129,8 @@ public class SpecialistService : ISpecialistService
                 Name = svc.Name,
                 Category = svc.Category,
                 Price = svc.Price,
-                DurationMinutes = svc.DurationMinutes
+                DurationMinutes = svc.DurationMinutes,
+                IsActive = svc.IsActive
             }).ToList()
         }).ToList();
     }
@@ -190,7 +193,8 @@ public class SpecialistService : ISpecialistService
                 Name = svc.Name,
                 Category = svc.Category,
                 Price = svc.Price,
-                DurationMinutes = svc.DurationMinutes
+                DurationMinutes = svc.DurationMinutes,
+                IsActive = svc.IsActive
             }).ToList()
         }).ToList();
     }

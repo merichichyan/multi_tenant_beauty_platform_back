@@ -10,9 +10,11 @@ public class ServiceItem
     public decimal Price { get; private set; }
     public int DurationMinutes { get; private set; }
 
+    public bool IsActive { get; private set; } = true;
+
     protected ServiceItem() { }
 
-    public ServiceItem(string name, string category, decimal price, int durationMinutes, Guid? specialistId = null, Guid? staffMemberId = null)
+    public ServiceItem(string name, string category, decimal price, int durationMinutes, Guid? specialistId = null, Guid? staffMemberId = null, bool isActive = true)
     {
         Id = Guid.NewGuid();
         Name = name;
@@ -21,5 +23,11 @@ public class ServiceItem
         DurationMinutes = durationMinutes;
         SpecialistId = specialistId;
         StaffMemberId = staffMemberId;
+        IsActive = isActive;
+    }
+
+    public void SetActive(bool isActive)
+    {
+        IsActive = isActive;
     }
 }

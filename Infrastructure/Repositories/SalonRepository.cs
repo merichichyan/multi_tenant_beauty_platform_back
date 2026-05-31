@@ -38,7 +38,6 @@ public class SalonRepository : ISalonRepository
         return await _context.Salons
             .Include(s => s.StaffMembers)
                 .ThenInclude(sm => sm.Services)
-            .Where(s => s.Status == "Verified")
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
