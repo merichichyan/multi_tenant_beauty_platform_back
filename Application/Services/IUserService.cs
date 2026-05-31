@@ -14,6 +14,18 @@ public class UserListItemDto
     public string Role { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+
+    public string? Phone { get; set; }
+    public string? Gender { get; set; }
+    public DateTime? Birthday { get; set; }
+    public string? Address { get; set; }
+    public string? Description { get; set; }
+    public string? SocialMedias { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? PreferredColors { get; set; }
+    public string? WorkingHours { get; set; }
+    public string? SalonName { get; set; }
+    public string? OperatingHours { get; set; }
 }
 
 public interface IUserService

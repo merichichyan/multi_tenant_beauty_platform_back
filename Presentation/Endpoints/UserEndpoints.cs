@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using multi_tenant_beauty_platform_back.Application.Services;
+using multi_tenant_beauty_platform_back.Domain.Entities;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
 
 namespace multi_tenant_beauty_platform_back.Presentation.Endpoints;
@@ -184,11 +185,23 @@ public static class UserEndpoints
         .WithSummary("Get paginated list of users")
         .WithDescription("Retrieves a paginated list of users, optionally filtered by status.");
 
-        group.MapPatch("/{id:guid}/status", async (Guid id, [FromQuery] string status, IUserService userService, CancellationToken ct) =>
+        group.MapPatch("/{id:guid}/status", async (Guid id, [FromBody] UpdateStatusRequest request, IUserService userService, ApplicationDbContext context, CancellationToken ct) =>
         {
             try
             {
-                await userService.UpdateUserStatusAsync(id, status, ct);
+                await userService.UpdateUserStatusAsync(id, request.Status, ct);
+
+                if (request.Status == "Rejected" && !string.IsNullOrWhiteSpace(request.Reason))
+                {
+                    var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+                    if (user != null)
+                    {
+                        var letter = new Letter(user.Id, user.Email, user.FullName, request.Reason);
+                        context.Letters.Add(letter);
+                        await context.SaveChangesAsync(ct);
+                    }
+                }
+
                 return Results.Ok(new { message = "Status updated successfully." });
             }
             catch (KeyNotFoundException ex)
@@ -198,6 +211,24 @@ public static class UserEndpoints
         })
         .WithSummary("Update user status")
         .WithDescription("Updates the status of a user (e.g. Verified, Rejected, Blocked).");
+
+        group.MapGet("/my-letters", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var letters = await context.Letters
+                .Where(l => l.UserId == userId)
+                .OrderByDescending(l => l.CreatedAt)
+                .ToListAsync(ct);
+
+            return Results.Ok(letters);
+        })
+        .RequireAuthorization()
+        .WithSummary("Get letters addressed to current user");
 
         return app;
     }
@@ -221,4 +252,9 @@ public record UpdateProfileRequest(
 public record UpdatePasswordRequest(
     string CurrentPassword,
     string NewPassword
+);
+
+public record UpdateStatusRequest(
+    string Status,
+    string? Reason
 );
