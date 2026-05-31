@@ -76,7 +76,8 @@ public static class UserEndpoints
                 socialMedias = socialMedias,
                 preferredColors = preferredColors,
                 workingHours = workingHours,
-                salonName = salonName
+                salonName = salonName,
+                rating = specialist != null ? specialist.Rating : (double?)null
             });
         })
         .RequireAuthorization()
