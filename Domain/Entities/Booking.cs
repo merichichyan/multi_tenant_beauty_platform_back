@@ -15,6 +15,7 @@ public class Booking
     public Guid UserId { get; private set; }
     public string UserEmail { get; private set; } = string.Empty;
     public DateTime CreatedAt { get; private set; }
+    public bool IsNoShow { get; private set; } = false;
 
     protected Booking() { }
 
@@ -31,5 +32,10 @@ public class Booking
         UserId = userId;
         UserEmail = userEmail.ToLowerInvariant().Trim();
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public void MarkAsNoShow(bool isNoShow)
+    {
+        IsNoShow = isNoShow;
     }
 }

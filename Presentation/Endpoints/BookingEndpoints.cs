@@ -93,6 +93,7 @@ public static class BookingEndpoints
                 b.UserId,
                 b.UserEmail,
                 b.CreatedAt,
+                b.IsNoShow,
                 UserName = users.TryGetValue(b.UserId, out var name) ? name : b.UserEmail
             });
 
@@ -148,6 +149,34 @@ public static class BookingEndpoints
             return Results.Ok(new { message = "Booking cancelled successfully" });
         })
         .WithSummary("Cancel a booking");
+
+        group.MapPatch("/{id:guid}/no-show", async (Guid id, [FromQuery] bool isNoShow, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var booking = await context.Bookings.FirstOrDefaultAsync(b => b.Id == id, ct);
+            if (booking == null)
+            {
+                return Results.NotFound(new { message = "Booking not found" });
+            }
+
+            // Verify that the current user is a specialist and is the specialist for this booking
+            var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
+            if (specialist == null || booking.SpecialistId != specialist.Id)
+            {
+                return Results.Forbid();
+            }
+
+            booking.MarkAsNoShow(isNoShow);
+            await context.SaveChangesAsync(ct);
+
+            return Results.Ok(new { message = "Booking no-show status updated successfully", isNoShow = booking.IsNoShow });
+        })
+        .WithSummary("Toggle no-show status for a booking");
 
         return app;
     }
