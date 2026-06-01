@@ -64,7 +64,30 @@ public static class BookingEndpoints
                                         .OrderByDescending(b => b.BookingDate)
                                         .ToListAsync(ct);
 
-            return Results.Ok(bookings);
+            var specialistIds = bookings.Select(b => b.SpecialistId).Distinct().ToList();
+            var activeSpecialistIds = await context.Specialists
+                                                   .Where(s => specialistIds.Contains(s.Id))
+                                                   .Select(s => s.Id)
+                                                   .ToListAsync(ct);
+
+            var result = bookings.Select(b => new
+            {
+                b.Id,
+                b.SpecialistId,
+                b.SpecialistName,
+                b.ServiceName,
+                b.Price,
+                b.DurationMinutes,
+                b.BookingDate,
+                b.TimeSlot,
+                b.UserId,
+                b.UserEmail,
+                b.CreatedAt,
+                b.IsNoShow,
+                IsSpecialistDeleted = !activeSpecialistIds.Contains(b.SpecialistId)
+            });
+
+            return Results.Ok(result);
         })
         .WithSummary("Get user bookings");
 

@@ -83,6 +83,28 @@ public static class UserEndpoints
         .RequireAuthorization()
         .WithSummary("Get current user profile info");
 
+        group.MapDelete("/me", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user == null)
+            {
+                return Results.NotFound(new { message = "User not found" });
+            }
+
+            context.Users.Remove(user);
+            await context.SaveChangesAsync(ct);
+
+            return Results.Ok(new { message = "Account deleted successfully" });
+        })
+        .RequireAuthorization()
+        .WithSummary("Delete current user account");
+
         group.MapPut("/profile", async ([FromBody] UpdateProfileRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
