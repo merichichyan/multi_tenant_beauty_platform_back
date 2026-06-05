@@ -19,6 +19,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<ServiceCategory> ServiceCategories { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Letter> Letters { get; set; }
+    public DbSet<FavoriteSalon> FavoriteSalons { get; set; }
+    public DbSet<FavoriteSpecialist> FavoriteSpecialists { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,6 +115,18 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UserName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Message).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
+        });
+
+        modelBuilder.Entity<FavoriteSalon>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.SalonId }).IsUnique();
+        });
+
+        modelBuilder.Entity<FavoriteSpecialist>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.SpecialistId }).IsUnique();
         });
     }
 }

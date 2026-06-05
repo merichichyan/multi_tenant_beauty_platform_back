@@ -134,6 +134,7 @@ app.MapListingEndpoints();
 app.MapUserEndpoints();
 app.MapBookingEndpoints();
 app.MapLetterEndpoints();
+app.MapFavoriteEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -141,6 +142,21 @@ using (var scope = app.Services.CreateScope())
     
     try
     {
+        context.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS ""FavoriteSalons"" (
+                ""Id"" uuid PRIMARY KEY,
+                ""UserId"" uuid NOT NULL,
+                ""SalonId"" uuid NOT NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_FavoriteSalons_UserId_SalonId"" ON ""FavoriteSalons"" (""UserId"", ""SalonId"");
+
+            CREATE TABLE IF NOT EXISTS ""FavoriteSpecialists"" (
+                ""Id"" uuid PRIMARY KEY,
+                ""UserId"" uuid NOT NULL,
+                ""SpecialistId"" uuid NOT NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_FavoriteSpecialists_UserId_SpecialistId"" ON ""FavoriteSpecialists"" (""UserId"", ""SpecialistId"");
+        ");
         context.Database.ExecuteSqlRaw("UPDATE \"ServiceItems\" SET \"IsActive\" = true;");
         var usersCount = context.Users.Count();
         Console.WriteLine($"Users Count: {usersCount}");
