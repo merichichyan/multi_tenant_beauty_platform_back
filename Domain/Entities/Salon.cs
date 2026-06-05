@@ -44,10 +44,12 @@ public class Salon : User
         _staffMembers.Add(staffMember);
     }
 
-    public void UpdateSalonProfile(string salonName, string address, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
+    public void UpdateSalonProfile(string salonName, string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours)
     {
         SalonName = salonName;
         Address = address;
+        Latitude = latitude;
+        Longitude = longitude;
         Description = description;
         SocialMedias = socialMedias;
         LogoUrl = logoUrl;

@@ -87,7 +87,9 @@ public class AuthService : IAuthService
             request.SocialMedias,
             request.LogoUrl,
             request.PreferredColors,
-            request.WorkingHours
+            request.WorkingHours,
+            birthday: request.Birthday,
+            gender: request.Gender
         );
 
         if (request.Services != null)

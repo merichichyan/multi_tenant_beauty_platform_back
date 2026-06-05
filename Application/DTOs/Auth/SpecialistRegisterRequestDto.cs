@@ -24,5 +24,7 @@ public record SpecialistRegisterRequestDto(
     [property: JsonPropertyName("preferredColors")] string? PreferredColors,
     [property: JsonPropertyName("workingHours")] string? WorkingHours,
     [property: JsonPropertyName("services")] List<ServiceDto> Services,
-    [property: JsonPropertyName("deviceId")] string? DeviceId
+    [property: JsonPropertyName("deviceId")] string? DeviceId,
+    [property: JsonPropertyName("birthday")] DateTime? Birthday,
+    [property: JsonPropertyName("gender")] string? Gender
 );

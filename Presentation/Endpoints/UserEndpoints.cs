@@ -34,6 +34,8 @@ public static class UserEndpoints
             string? preferredColors = null;
             string? workingHours = null;
             string? salonName = null;
+            double? latitude = null;
+            double? longitude = null;
 
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
             if (specialist != null)
@@ -44,6 +46,8 @@ public static class UserEndpoints
                 socialMedias = specialist.SocialMedias;
                 preferredColors = specialist.PreferredColors;
                 workingHours = specialist.WorkingHours;
+                latitude = specialist.Latitude;
+                longitude = specialist.Longitude;
             }
             else
             {
@@ -57,6 +61,8 @@ public static class UserEndpoints
                     preferredColors = salon.PreferredColors;
                     workingHours = salon.OperatingHours;
                     salonName = salon.SalonName;
+                    latitude = salon.Latitude;
+                    longitude = salon.Longitude;
                 }
             }
 
@@ -77,6 +83,8 @@ public static class UserEndpoints
                 preferredColors = preferredColors,
                 workingHours = workingHours,
                 salonName = salonName,
+                latitude = latitude,
+                longitude = longitude,
                 rating = specialist != null ? specialist.Rating : (double?)null
             });
         })
@@ -136,6 +144,8 @@ public static class UserEndpoints
             {
                 specialist.UpdateSpecialistProfile(
                     request.Address ?? string.Empty,
+                    request.Latitude,
+                    request.Longitude,
                     request.Description,
                     request.SocialMedias,
                     request.LogoUrl,
@@ -151,6 +161,8 @@ public static class UserEndpoints
                     salon.UpdateSalonProfile(
                         request.SalonName ?? request.FullName,
                         request.Address ?? string.Empty,
+                        request.Latitude,
+                        request.Longitude,
                         request.Description,
                         request.SocialMedias,
                         request.LogoUrl,
@@ -264,6 +276,8 @@ public record UpdateProfileRequest(
     String? Gender,
     DateTime? Birthday,
     string? Address,
+    double? Latitude,
+    double? Longitude,
     string? Description,
     string? SocialMedias,
     string? LogoUrl,

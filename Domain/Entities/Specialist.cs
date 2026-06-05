@@ -21,8 +21,8 @@ public class Specialist : User
 
     public Specialist(string email, string passwordHash, string fullName, string role, string? phone, string? deviceId,
         string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours,
-        double rating = 4.5, decimal startingPrice = 40, string availabilityStatus = "AVAILABLE TODAY")
-        : base(email, passwordHash, fullName, role, phone, null, null, deviceId)
+        double rating = 4.5, decimal startingPrice = 40, string availabilityStatus = "AVAILABLE TODAY", DateTime? birthday = null, string? gender = null)
+        : base(email, passwordHash, fullName, role, phone, gender, birthday, deviceId)
     {
         Address = address;
         Latitude = latitude;
@@ -42,9 +42,11 @@ public class Specialist : User
         _services.Add(service);
     }
 
-    public void UpdateSpecialistProfile(string address, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
+    public void UpdateSpecialistProfile(string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? workingHours)
     {
         Address = address;
+        Latitude = latitude;
+        Longitude = longitude;
         Description = description;
         SocialMedias = socialMedias;
         LogoUrl = logoUrl;
