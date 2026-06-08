@@ -26,7 +26,13 @@ public class SalonService : ISalonService
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
 
-        var dtos = items.Select(s => new SalonListItemDto
+        var salonsList = items.ToList();
+        var specIds = salonsList.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
+        var specialistServices = await _context.ServiceItems
+            .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
+            .ToListAsync(ct);
+
+        var dtos = salonsList.Select(s => new SalonListItemDto
         {
             Id = s.Id,
             UserId = s.Id,
@@ -43,23 +49,32 @@ public class SalonService : ISalonService
             Rating = s.Rating,
             StartingPrice = s.StartingPrice,
             AvailabilityStatus = s.AvailabilityStatus,
-            StaffMembers = s.StaffMembers.Select(sm => new StaffMemberDto
-            {
-                Id = sm.Id,
-                FullName = sm.FullName,
-                Title = sm.Title,
-                GraphicsUrl = sm.GraphicsUrl,
-                WorkingHours = sm.WorkingHours,
-                Status = sm.Status,
-                Services = sm.Services.Select(svc => new ServiceItemDto
+            StaffMembers = s.StaffMembers.Select(sm => {
+                var smServices = sm.Services.ToList();
+                if (sm.SpecialistId.HasValue)
                 {
-                    Id = svc.Id,
-                    Name = svc.Name,
-                    Category = svc.Category,
-                    Price = svc.Price,
-                    DurationMinutes = svc.DurationMinutes,
-                    IsActive = svc.IsActive
-                }).ToList()
+                    var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                    smServices.AddRange(specServices);
+                }
+                return new StaffMemberDto
+                {
+                    Id = sm.Id,
+                    FullName = sm.FullName,
+                    Title = sm.Title,
+                    GraphicsUrl = sm.GraphicsUrl,
+                    WorkingHours = sm.WorkingHours,
+                    Status = sm.Status,
+                    SpecialistId = sm.SpecialistId,
+                    Services = smServices.Select(svc => new ServiceItemDto
+                    {
+                        Id = svc.Id,
+                        Name = svc.Name,
+                        Category = svc.Category,
+                        Price = svc.Price,
+                        DurationMinutes = svc.DurationMinutes,
+                        IsActive = svc.IsActive
+                    }).ToList()
+                };
             }).ToList()
         }).ToList();
 
@@ -80,6 +95,11 @@ public class SalonService : ISalonService
         var salon = await _repository.GetByIdAsync(id, ct);
         if (salon is null) return null;
 
+        var specIds = salon.StaffMembers.Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).ToList();
+        var specialistServices = await _context.ServiceItems
+            .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
+            .ToListAsync(ct);
+
         return new SalonListItemDto
         {
             Id = salon.Id,
@@ -97,23 +117,32 @@ public class SalonService : ISalonService
             Rating = salon.Rating,
             StartingPrice = salon.StartingPrice,
             AvailabilityStatus = salon.AvailabilityStatus,
-            StaffMembers = salon.StaffMembers.Select(sm => new StaffMemberDto
-            {
-                Id = sm.Id,
-                FullName = sm.FullName,
-                Title = sm.Title,
-                GraphicsUrl = sm.GraphicsUrl,
-                WorkingHours = sm.WorkingHours,
-                Status = sm.Status,
-                Services = sm.Services.Select(svc => new ServiceItemDto
+            StaffMembers = salon.StaffMembers.Select(sm => {
+                var smServices = sm.Services.ToList();
+                if (sm.SpecialistId.HasValue)
                 {
-                    Id = svc.Id,
-                    Name = svc.Name,
-                    Category = svc.Category,
-                    Price = svc.Price,
-                    DurationMinutes = svc.DurationMinutes,
-                    IsActive = svc.IsActive
-                }).ToList()
+                    var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                    smServices.AddRange(specServices);
+                }
+                return new StaffMemberDto
+                {
+                    Id = sm.Id,
+                    FullName = sm.FullName,
+                    Title = sm.Title,
+                    GraphicsUrl = sm.GraphicsUrl,
+                    WorkingHours = sm.WorkingHours,
+                    Status = sm.Status,
+                    SpecialistId = sm.SpecialistId,
+                    Services = smServices.Select(svc => new ServiceItemDto
+                    {
+                        Id = svc.Id,
+                        Name = svc.Name,
+                        Category = svc.Category,
+                        Price = svc.Price,
+                        DurationMinutes = svc.DurationMinutes,
+                        IsActive = svc.IsActive
+                    }).ToList()
+                };
             }).ToList()
         };
     }
@@ -155,6 +184,11 @@ public class SalonService : ISalonService
             .Select(x => x.Salon)
             .ToList();
 
+        var specIds = sorted.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
+        var specialistServices = await _context.ServiceItems
+            .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
+            .ToListAsync(ct);
+
         return sorted.Select(s => new SalonListItemDto
         {
             Id = s.Id,
@@ -172,23 +206,32 @@ public class SalonService : ISalonService
             Rating = s.Rating,
             StartingPrice = s.StartingPrice,
             AvailabilityStatus = s.AvailabilityStatus,
-            StaffMembers = s.StaffMembers.Select(sm => new StaffMemberDto
-            {
-                Id = sm.Id,
-                FullName = sm.FullName,
-                Title = sm.Title,
-                GraphicsUrl = sm.GraphicsUrl,
-                WorkingHours = sm.WorkingHours,
-                Status = sm.Status,
-                Services = sm.Services.Select(svc => new ServiceItemDto
+            StaffMembers = s.StaffMembers.Select(sm => {
+                var smServices = sm.Services.ToList();
+                if (sm.SpecialistId.HasValue)
                 {
-                    Id = svc.Id,
-                    Name = svc.Name,
-                    Category = svc.Category,
-                    Price = svc.Price,
-                    DurationMinutes = svc.DurationMinutes,
-                    IsActive = svc.IsActive
-                }).ToList()
+                    var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                    smServices.AddRange(specServices);
+                }
+                return new StaffMemberDto
+                {
+                    Id = sm.Id,
+                    FullName = sm.FullName,
+                    Title = sm.Title,
+                    GraphicsUrl = sm.GraphicsUrl,
+                    WorkingHours = sm.WorkingHours,
+                    Status = sm.Status,
+                    SpecialistId = sm.SpecialistId,
+                    Services = smServices.Select(svc => new ServiceItemDto
+                    {
+                        Id = svc.Id,
+                        Name = svc.Name,
+                        Category = svc.Category,
+                        Price = svc.Price,
+                        DurationMinutes = svc.DurationMinutes,
+                        IsActive = svc.IsActive
+                    }).ToList()
+                };
             }).ToList()
         }).ToList();
     }

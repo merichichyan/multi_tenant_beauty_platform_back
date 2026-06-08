@@ -28,5 +28,6 @@ public class StaffMemberDto
     public string? GraphicsUrl { get; set; }
     public string? WorkingHours { get; set; }
     public string Status { get; set; } = "Active";
+    public Guid? SpecialistId { get; set; }
     public List<ServiceItemDto> Services { get; set; } = [];
 }

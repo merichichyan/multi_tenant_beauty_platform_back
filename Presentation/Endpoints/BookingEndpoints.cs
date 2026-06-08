@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using multi_tenant_beauty_platform_back.Domain.Entities;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
 
@@ -26,7 +27,9 @@ public static class BookingEndpoints
             }
 
             // Find specialist or staff member details to store
+            Guid resolvedSpecialistId = request.SpecialistId;
             string specialistName = string.Empty;
+            
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == request.SpecialistId, ct);
             if (specialist != null)
             {
@@ -37,7 +40,16 @@ public static class BookingEndpoints
                 var staff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.Id == request.SpecialistId, ct);
                 if (staff != null)
                 {
-                    specialistName = staff.FullName;
+                    if (staff.SpecialistId.HasValue)
+                    {
+                        resolvedSpecialistId = staff.SpecialistId.Value;
+                        var linkedSpec = await context.Specialists.FirstOrDefaultAsync(s => s.Id == resolvedSpecialistId, ct);
+                        specialistName = linkedSpec?.FullName ?? staff.FullName;
+                    }
+                    else
+                    {
+                        specialistName = staff.FullName;
+                    }
                 }
                 else
                 {
@@ -46,7 +58,7 @@ public static class BookingEndpoints
             }
 
             var booking = new Booking(
-                request.SpecialistId,
+                resolvedSpecialistId,
                 specialistName,
                 request.ServiceName,
                 request.Price,
@@ -54,7 +66,9 @@ public static class BookingEndpoints
                 request.BookingDate,
                 request.TimeSlot,
                 userId,
-                emailClaim
+                emailClaim,
+                request.SalonId,
+                request.SalonName
             );
 
             context.Bookings.Add(booking);
@@ -82,6 +96,10 @@ public static class BookingEndpoints
                                                    .Where(s => specialistIds.Contains(s.Id))
                                                    .Select(s => s.Id)
                                                    .ToListAsync(ct);
+            var activeStaffIds = await context.StaffMembers
+                                              .Where(sm => specialistIds.Contains(sm.Id))
+                                              .Select(sm => sm.Id)
+                                              .ToListAsync(ct);
 
             var result = bookings.Select(b => new
             {
@@ -97,26 +115,112 @@ public static class BookingEndpoints
                 b.UserEmail,
                 b.CreatedAt,
                 b.IsNoShow,
-                IsSpecialistDeleted = !activeSpecialistIds.Contains(b.SpecialistId)
+                b.SalonId,
+                b.SalonName,
+                IsSpecialistDeleted = !activeSpecialistIds.Contains(b.SpecialistId) && !activeStaffIds.Contains(b.SpecialistId)
             });
 
             return Results.Ok(result);
         })
         .WithSummary("Get user bookings");
 
-        group.MapGet("/specialist/{specialistId:guid}", async (Guid specialistId, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapGet("/specialist/{specialistId:guid}", async (Guid specialistId, [FromQuery] Guid? salonId, ApplicationDbContext context, CancellationToken ct) =>
         {
+            // Build the set of related IDs to fetch bookings for this physical specialist
+            var relatedIds = new List<Guid> { specialistId };
+            Guid actualSpecialistId = specialistId;
+            
+            var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == specialistId, ct);
+            if (specialist != null)
+            {
+                var linkedStaffIds = await context.StaffMembers
+                                                   .Where(sm => sm.SpecialistId == specialistId)
+                                                   .Select(sm => sm.Id)
+                                                   .ToListAsync(ct);
+                relatedIds.AddRange(linkedStaffIds);
+            }
+            else
+            {
+                var staffMember = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.Id == specialistId, ct);
+                if (staffMember != null)
+                {
+                    if (staffMember.SpecialistId.HasValue)
+                    {
+                        actualSpecialistId = staffMember.SpecialistId.Value;
+                        relatedIds.Add(actualSpecialistId);
+                        
+                        var otherLinkedStaffIds = await context.StaffMembers
+                                                               .Where(sm => sm.SpecialistId == actualSpecialistId && sm.Id != staffMember.Id)
+                                                               .Select(sm => sm.Id)
+                                                               .ToListAsync(ct);
+                        relatedIds.AddRange(otherLinkedStaffIds);
+                    }
+                }
+            }
+
+            // Get actual bookings
             var bookings = await context.Bookings
-                                        .Where(b => b.SpecialistId == specialistId)
+                                        .Where(b => relatedIds.Contains(b.SpecialistId))
                                         .ToListAsync(ct);
 
-            // Look up user names for each booking
-            var userIds = bookings.Select(b => b.UserId).Distinct().ToList();
+            // Get all staff member profiles linked to this specialist to find their salon shifts
+            var staffShifts = await context.StaffMembers
+                                           .Where(sm => sm.SpecialistId == actualSpecialistId && sm.WorkingHours != null)
+                                           .ToListAsync(ct);
+
+            var blockedBookings = new List<Booking>();
+            foreach (var staff in staffShifts)
+            {
+                // If we are currently checking slots inside the salon where they work, do NOT block these hours!
+                if (salonId.HasValue && salonId.Value == staff.SalonId)
+                {
+                    continue;
+                }
+
+                var salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == staff.SalonId, ct);
+                var salonName = salon?.SalonName ?? "Salon";
+                var parsedShifts = WorkingHoursParser.Parse(staff.WorkingHours!);
+                
+                var today = DateTime.Today;
+                for (int offset = 0; offset < 90; offset++)
+                {
+                    var date = today.AddDays(offset);
+                    var dayOfWeek = date.DayOfWeek;
+
+                    foreach (var shift in parsedShifts)
+                    {
+                        if (shift.Day == dayOfWeek)
+                        {
+                            var timeSlotStr = $"{shift.Start:hh\\:mm}-{shift.End:hh\\:mm}";
+                            var virtualBooking = new Booking(
+                                actualSpecialistId,
+                                "BLOCKED_SLOT",
+                                $"At {salonName}",
+                                0,
+                                (int)(shift.End - shift.Start).TotalMinutes,
+                                date,
+                                timeSlotStr,
+                                Guid.Empty,
+                                "system@beautyplatform.com",
+                                staff.SalonId,
+                                salonName
+                            );
+                            blockedBookings.Add(virtualBooking);
+                        }
+                    }
+                }
+            }
+
+            // Combine actual and virtual/blocked bookings
+            var allBookings = bookings.Concat(blockedBookings).ToList();
+
+            // Look up user names for each actual booking
+            var userIds = allBookings.Select(b => b.UserId).Distinct().ToList();
             var users = await context.Users
                                      .Where(u => userIds.Contains(u.Id))
                                      .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
 
-            var result = bookings.Select(b => new
+            var result = allBookings.Select(b => new
             {
                 b.Id,
                 b.SpecialistId,
@@ -130,6 +234,8 @@ public static class BookingEndpoints
                 b.UserEmail,
                 b.CreatedAt,
                 b.IsNoShow,
+                b.SalonId,
+                b.SalonName,
                 UserName = users.TryGetValue(b.UserId, out var name) ? name : b.UserEmail
             });
 
@@ -202,7 +308,20 @@ public static class BookingEndpoints
 
             // Verify that the current user is a specialist and is the specialist for this booking
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
-            if (specialist == null || booking.SpecialistId != specialist.Id)
+            if (specialist == null)
+            {
+                return Results.Forbid();
+            }
+
+            bool isAuthorized = booking.SpecialistId == specialist.Id;
+            if (!isAuthorized)
+            {
+                // Check if the booking was made under a StaffMember ID linked to this specialist
+                var isLinkedStaff = await context.StaffMembers.AnyAsync(sm => sm.Id == booking.SpecialistId && sm.SpecialistId == specialist.Id, ct);
+                isAuthorized = isLinkedStaff;
+            }
+
+            if (!isAuthorized)
             {
                 return Results.Forbid();
             }
@@ -224,5 +343,123 @@ public record CreateBookingRequest(
     decimal Price,
     int DurationMinutes,
     DateTime BookingDate,
-    string TimeSlot
+    string TimeSlot,
+    Guid? SalonId = null,
+    string? SalonName = null
 );
+
+public static class WorkingHoursParser
+{
+    public static List<(DayOfWeek Day, TimeSpan Start, TimeSpan End)> Parse(string workingHours)
+    {
+        var result = new List<(DayOfWeek, TimeSpan, TimeSpan)>();
+        if (string.IsNullOrWhiteSpace(workingHours))
+            return result;
+
+        try
+        {
+            // Normalize spaces around the hyphen and remove extra spaces
+            var normalized = Regex.Replace(workingHours, @"\s*-\s*", "-");
+            normalized = Regex.Replace(normalized, @"\s*to\s*", "-");
+            
+            var parts = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+            {
+                if (TryParseTimeRange(normalized, out var start, out var end))
+                {
+                    for (int i = 0; i < 7; i++)
+                    {
+                        result.Add(((DayOfWeek)i, start, end));
+                    }
+                }
+                return result;
+            }
+
+            var daysPart = parts[0];
+            var timePart = parts[1];
+
+            if (!TryParseTimeRange(timePart, out var startTime, out var endTime))
+                return result;
+
+            var days = ParseDays(daysPart);
+            foreach (var day in days)
+            {
+                result.Add((day, startTime, endTime));
+            }
+        }
+        catch
+        {
+            // Ignore parse errors
+        }
+
+        return result;
+    }
+
+    private static bool TryParseTimeRange(string range, out TimeSpan start, out TimeSpan end)
+    {
+        start = TimeSpan.Zero;
+        end = TimeSpan.Zero;
+
+        var parts = range.Split(new[] { '-', 't', 'o' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2) return false;
+
+        if (TimeSpan.TryParse(parts[0].Trim(), out start) && TimeSpan.TryParse(parts[1].Trim(), out end))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static List<DayOfWeek> ParseDays(string daysPart)
+    {
+        var result = new List<DayOfWeek>();
+        var parts = daysPart.Split(new[] { ',', '&' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        foreach (var part in parts)
+        {
+            var trimmed = part.Trim().ToLowerInvariant();
+            if (trimmed.Contains('-'))
+            {
+                var rangeParts = trimmed.Split('-');
+                if (rangeParts.Length == 2)
+                {
+                    var startDay = MapDay(rangeParts[0]);
+                    var endDay = MapDay(rangeParts[1]);
+                    if (startDay.HasValue && endDay.HasValue)
+                    {
+                        int current = (int)startDay.Value;
+                        int target = (int)endDay.Value;
+                        while (true)
+                        {
+                            result.Add((DayOfWeek)current);
+                            if (current == target) break;
+                            current = (current + 1) % 7;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var day = MapDay(trimmed);
+                if (day.HasValue)
+                {
+                    result.Add(day.Value);
+                }
+            }
+        }
+        return result;
+    }
+
+    private static DayOfWeek? MapDay(string dayStr)
+    {
+        dayStr = dayStr.Trim().ToLowerInvariant();
+        if (dayStr.StartsWith("mon")) return DayOfWeek.Monday;
+        if (dayStr.StartsWith("tue")) return DayOfWeek.Tuesday;
+        if (dayStr.StartsWith("wed")) return DayOfWeek.Wednesday;
+        if (dayStr.StartsWith("thu")) return DayOfWeek.Thursday;
+        if (dayStr.StartsWith("fri")) return DayOfWeek.Friday;
+        if (dayStr.StartsWith("sat")) return DayOfWeek.Saturday;
+        if (dayStr.StartsWith("sun")) return DayOfWeek.Sunday;
+        return null;
+    }
+}

@@ -34,21 +34,25 @@ public static class SalonEndpoints
             }
 
             var staffIds = salon.StaffMembers.Select(sm => sm.Id).ToList();
+            var linkedSpecialistIds = salon.StaffMembers
+                                           .Where(sm => sm.SpecialistId.HasValue)
+                                           .Select(sm => sm.SpecialistId!.Value)
+                                           .ToList();
 
             var bookings = await context.Bookings
-                                        .Where(b => staffIds.Contains(b.SpecialistId))
+                                        .Where(b => staffIds.Contains(b.SpecialistId) || (b.SpecialistId != Guid.Empty && linkedSpecialistIds.Contains(b.SpecialistId)))
                                         .ToListAsync(ct);
 
             var today = DateTime.Today;
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
 
             // In-memory calculations
-            var bookingsThisMonth = bookings.Count(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today);
-            var bookingsToday = bookings.Count(b => b.BookingDate.Date == today);
+            var bookingsThisMonth = bookings.Count(b => b.SalonId == salon.Id && b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today);
+            var bookingsToday = bookings.Count(b => b.SalonId == salon.Id && b.BookingDate.Date == today);
 
-            var incomeThisMonth = bookings.Where(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today)
+            var incomeThisMonth = bookings.Where(b => b.SalonId == salon.Id && b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today)
                                            .Sum(b => b.Price);
-            var incomeToday = bookings.Where(b => b.BookingDate.Date == today)
+            var incomeToday = bookings.Where(b => b.SalonId == salon.Id && b.BookingDate.Date == today)
                                        .Sum(b => b.Price);
 
             var totalStaffCount = salon.StaffMembers.Count;

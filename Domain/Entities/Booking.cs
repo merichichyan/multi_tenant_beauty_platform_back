@@ -16,10 +16,12 @@ public class Booking
     public string UserEmail { get; private set; } = string.Empty;
     public DateTime CreatedAt { get; private set; }
     public bool IsNoShow { get; private set; } = false;
+    public Guid? SalonId { get; private set; }
+    public string? SalonName { get; private set; }
 
     protected Booking() { }
 
-    public Booking(Guid specialistId, string specialistName, string serviceName, decimal price, int durationMinutes, DateTime bookingDate, string timeSlot, Guid userId, string userEmail)
+    public Booking(Guid specialistId, string specialistName, string serviceName, decimal price, int durationMinutes, DateTime bookingDate, string timeSlot, Guid userId, string userEmail, Guid? salonId = null, string? salonName = null)
     {
         Id = Guid.NewGuid();
         SpecialistId = specialistId;
@@ -32,6 +34,8 @@ public class Booking
         UserId = userId;
         UserEmail = userEmail.ToLowerInvariant().Trim();
         CreatedAt = DateTime.UtcNow;
+        SalonId = salonId;
+        SalonName = salonName;
     }
 
     public void MarkAsNoShow(bool isNoShow)

@@ -56,6 +56,11 @@ public static class FavoriteEndpoints
                 .Where(s => favoriteSalonIds.Contains(s.Id) && (s.Status == "Verified" || s.Status == "Approved"))
                 .ToListAsync(ct);
 
+            var specIds = salons.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
+            var specialistServices = await context.ServiceItems
+                .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
+                .ToListAsync(ct);
+
             var dtos = salons.Select(s => new SalonListItemDto
             {
                 Id = s.Id,
@@ -73,22 +78,32 @@ public static class FavoriteEndpoints
                 Rating = s.Rating,
                 StartingPrice = s.StartingPrice,
                 AvailabilityStatus = s.AvailabilityStatus,
-                StaffMembers = s.StaffMembers.Select(sm => new StaffMemberDto
-                {
-                    Id = sm.Id,
-                    FullName = sm.FullName,
-                    Title = sm.Title,
-                    GraphicsUrl = sm.GraphicsUrl,
-                    WorkingHours = sm.WorkingHours,
-                    Services = sm.Services.Select(svc => new ServiceItemDto
+                StaffMembers = s.StaffMembers.Select(sm => {
+                    var smServices = sm.Services.ToList();
+                    if (sm.SpecialistId.HasValue)
                     {
-                        Id = svc.Id,
-                        Name = svc.Name,
-                        Category = svc.Category,
-                        Price = svc.Price,
-                        DurationMinutes = svc.DurationMinutes,
-                        IsActive = svc.IsActive
-                    }).ToList()
+                        var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                        smServices.AddRange(specServices);
+                    }
+                    return new StaffMemberDto
+                    {
+                        Id = sm.Id,
+                        FullName = sm.FullName,
+                        Title = sm.Title,
+                        GraphicsUrl = sm.GraphicsUrl,
+                        WorkingHours = sm.WorkingHours,
+                        Status = sm.Status,
+                        SpecialistId = sm.SpecialistId,
+                        Services = smServices.Select(svc => new ServiceItemDto
+                        {
+                            Id = svc.Id,
+                            Name = svc.Name,
+                            Category = svc.Category,
+                            Price = svc.Price,
+                            DurationMinutes = svc.DurationMinutes,
+                            IsActive = svc.IsActive
+                        }).ToList()
+                    };
                 }).ToList()
             }).ToList();
 

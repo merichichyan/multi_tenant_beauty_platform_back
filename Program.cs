@@ -159,6 +159,24 @@ using (var scope = app.Services.CreateScope())
             // Column already exists
         }
 
+        try
+        {
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"Bookings\" ADD COLUMN \"SalonId\" uuid NULL;");
+        }
+        catch (Exception)
+        {
+            // Column already exists
+        }
+
+        try
+        {
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"Bookings\" ADD COLUMN \"SalonName\" TEXT NULL;");
+        }
+        catch (Exception)
+        {
+            // Column already exists
+        }
+
         context.Database.ExecuteSqlRaw(@"
             CREATE TABLE IF NOT EXISTS ""FavoriteSalons"" (
                 ""Id"" uuid PRIMARY KEY,

@@ -50,6 +50,11 @@ public class ListingService : IListingService
             .Take(count)
             .ToListAsync(ct);
 
+        var specIds = salons.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
+        var specialistServices = await _db.ServiceItems
+            .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
+            .ToListAsync(ct);
+
         return salons.Select(s => new SalonListItemDto(
             Id: s.Id,
             UserId: s.Id,
@@ -60,15 +65,23 @@ public class ListingService : IListingService
             OperatingHours: s.OperatingHours,
             PreferredColors: s.PreferredColors,
             StaffMembers: s.StaffMembers
-                .Select(sm => new StaffMemberDto(
-                    sm.FullName,
-                    sm.Title ?? string.Empty,
-                    sm.GraphicsUrl,
-                    sm.Services
-                        .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes, svc.IsActive))
-                        .ToList()
-                        .AsReadOnly()
-                ))
+                .Select(sm => {
+                    var smServices = sm.Services.ToList();
+                    if (sm.SpecialistId.HasValue)
+                    {
+                        var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                        smServices.AddRange(specServices);
+                    }
+                    return new StaffMemberDto(
+                        sm.FullName,
+                        sm.Title ?? string.Empty,
+                        sm.GraphicsUrl,
+                        smServices
+                            .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes, svc.IsActive))
+                            .ToList()
+                            .AsReadOnly()
+                    );
+                })
                 .ToList()
                 .AsReadOnly(),
             AverageRating: null,

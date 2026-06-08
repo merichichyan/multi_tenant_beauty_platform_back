@@ -106,6 +106,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Price);
             entity.Property(e => e.TimeSlot).IsRequired().HasMaxLength(50);
             entity.Property(e => e.UserEmail).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.SalonName).HasMaxLength(150);
         });
 
         modelBuilder.Entity<Letter>(entity =>
