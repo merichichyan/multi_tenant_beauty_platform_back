@@ -53,7 +53,7 @@ public static class FavoriteEndpoints
             var salons = await context.Salons
                 .Include(s => s.StaffMembers)
                     .ThenInclude(sm => sm.Services)
-                .Where(s => favoriteSalonIds.Contains(s.Id) && s.Status == "Verified")
+                .Where(s => favoriteSalonIds.Contains(s.Id) && (s.Status == "Verified" || s.Status == "Approved"))
                 .ToListAsync(ct);
 
             var dtos = salons.Select(s => new SalonListItemDto
@@ -111,7 +111,7 @@ public static class FavoriteEndpoints
 
             var specialists = await context.Specialists
                 .Include(s => s.Services)
-                .Where(s => favoriteSpecialistIds.Contains(s.Id) && s.Status == "Verified")
+                .Where(s => favoriteSpecialistIds.Contains(s.Id) && (s.Status == "Verified" || s.Status == "Approved"))
                 .ToListAsync(ct);
 
             var dtos = specialists.Select(s => new SpecialistListItemDto
@@ -153,7 +153,7 @@ public static class FavoriteEndpoints
                 return Results.Unauthorized();
             }
 
-            var salonExists = await context.Salons.AnyAsync(s => s.Id == salonId && s.Status == "Verified", ct);
+            var salonExists = await context.Salons.AnyAsync(s => s.Id == salonId && (s.Status == "Verified" || s.Status == "Approved"), ct);
             if (!salonExists)
             {
                 return Results.NotFound(new { message = "Salon not found or not verified" });
@@ -188,7 +188,7 @@ public static class FavoriteEndpoints
                 return Results.Unauthorized();
             }
 
-            var specialistExists = await context.Specialists.AnyAsync(s => s.Id == specialistId && s.Status == "Verified", ct);
+            var specialistExists = await context.Specialists.AnyAsync(s => s.Id == specialistId && (s.Status == "Verified" || s.Status == "Approved"), ct);
             if (!specialistExists)
             {
                 return Results.NotFound(new { message = "Specialist not found or not verified" });
