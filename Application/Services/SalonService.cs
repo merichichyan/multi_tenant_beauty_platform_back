@@ -155,6 +155,17 @@ public class SalonService : ISalonService
             .Where(s => s.Status == "Verified")
             .ToListAsync(ct);
 
+        // Preload linked specialist services for ALL staff members in these salons
+        var allSpecIds = salons.SelectMany(s => s.StaffMembers)
+                               .Where(sm => sm.SpecialistId.HasValue)
+                               .Select(sm => sm.SpecialistId!.Value)
+                               .Distinct()
+                               .ToList();
+                               
+        var specialistServices = await _context.ServiceItems
+            .Where(s => s.SpecialistId.HasValue && allSpecIds.Contains(s.SpecialistId.Value))
+            .ToListAsync(ct);
+
         if (categoryId.HasValue)
         {
             var category = await _context.ServiceCategories.FindAsync(new object[] { categoryId.Value }, ct);
@@ -164,12 +175,24 @@ public class SalonService : ISalonService
                 var ru = (category.NameRu ?? "").Trim().ToLower();
                 var hy = (category.NameHy ?? "").Trim().ToLower();
 
-                salons = salons.Where(s => s.StaffMembers.Any(sm => sm.Services.Any(svc => {
-                    var sc = (svc.Category ?? "").Trim().ToLower();
-                    return (en != "" && (sc.Contains(en) || en.Contains(sc))) ||
-                           (ru != "" && (sc.Contains(ru) || ru.Contains(sc))) ||
-                           (hy != "" && (sc.Contains(hy) || hy.Contains(sc)));
-                }))).ToList();
+                salons = salons.Where(s => s.StaffMembers.Any(sm => {
+                    var smServices = sm.Services.Select(svc => svc.Category).ToList();
+                    if (sm.SpecialistId.HasValue)
+                    {
+                        var specSvcCategories = specialistServices
+                            .Where(svc => svc.SpecialistId == sm.SpecialistId.Value)
+                            .Select(svc => svc.Category)
+                            .ToList();
+                        smServices.AddRange(specSvcCategories);
+                    }
+
+                    return smServices.Any(cat => {
+                        var sc = (cat ?? "").Trim().ToLower();
+                        return (en != "" && (sc.Contains(en) || en.Contains(sc))) ||
+                               (ru != "" && (sc.Contains(ru) || ru.Contains(sc))) ||
+                               (hy != "" && (sc.Contains(hy) || hy.Contains(sc)));
+                    });
+                })).ToList();
             }
         }
 
@@ -183,11 +206,6 @@ public class SalonService : ISalonService
             .Take(limit)
             .Select(x => x.Salon)
             .ToList();
-
-        var specIds = sorted.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
-        var specialistServices = await _context.ServiceItems
-            .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
-            .ToListAsync(ct);
 
         return sorted.Select(s => new SalonListItemDto
         {
