@@ -45,4 +45,9 @@ public class StaffMember
         GraphicsUrl = graphicsUrl;
         WorkingHours = workingHours;
     }
+
+    public void UpdateWorkingHours(string? workingHours)
+    {
+        WorkingHours = workingHours;
+    }
 }

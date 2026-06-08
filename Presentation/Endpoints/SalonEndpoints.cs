@@ -189,28 +189,21 @@ public static class SalonEndpoints
                 return Results.Unauthorized();
             }
 
-            if (string.IsNullOrWhiteSpace(request.FullName) && !request.SpecialistId.HasValue)
+            if (!request.SpecialistId.HasValue)
             {
-                return Results.BadRequest(new { message = "Full name is required." });
+                return Results.BadRequest(new { message = "SpecialistId is required to link an existing specialist." });
             }
 
-            string fullName = request.FullName;
-            string? title = request.Title;
-            string? graphicsUrl = request.GraphicsUrl;
-            string? workingHours = request.WorkingHours;
-
-            if (request.SpecialistId.HasValue)
+            var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == request.SpecialistId.Value, ct);
+            if (specialist == null)
             {
-                var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == request.SpecialistId.Value, ct);
-                if (specialist == null)
-                {
-                    return Results.NotFound(new { message = "Specialist to link not found." });
-                }
-                fullName = specialist.FullName;
-                graphicsUrl = specialist.LogoUrl;
-                workingHours = specialist.WorkingHours;
-                title = specialist.Description ?? "Specialist";
+                return Results.NotFound(new { message = "Specialist to link not found." });
             }
+
+            string fullName = specialist.FullName;
+            string? title = specialist.Description ?? "Specialist";
+            string? graphicsUrl = specialist.LogoUrl;
+            string? workingHours = specialist.WorkingHours;
 
             var staff = new StaffMember(userId, fullName, title, graphicsUrl, workingHours, "Active", request.SpecialistId);
             context.StaffMembers.Add(staff);
@@ -237,11 +230,6 @@ public static class SalonEndpoints
                 return Results.Unauthorized();
             }
 
-            if (string.IsNullOrWhiteSpace(request.FullName))
-            {
-                return Results.BadRequest(new { message = "Full name is required." });
-            }
-
             var staff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.Id == staffId, ct);
             if (staff == null)
             {
@@ -253,7 +241,7 @@ public static class SalonEndpoints
                 return Results.Forbid();
             }
 
-            staff.UpdateStaffMember(request.FullName, request.Title, request.GraphicsUrl, request.WorkingHours);
+            staff.UpdateWorkingHours(request.WorkingHours);
             await context.SaveChangesAsync(ct);
 
             return Results.Ok(new { message = "Staff member updated successfully" });
@@ -327,8 +315,5 @@ public record CreateStaffRequest(
 );
 
 public record UpdateStaffRequest(
-    string FullName,
-    string? Title,
-    string? GraphicsUrl,
     string? WorkingHours
 );
