@@ -18,11 +18,11 @@ public class SpecialistService : ISpecialistService
         _context = context;
     }
 
-    public async Task<PaginatedResponseDto<SpecialistListItemDto>> GetPagedAsync(int page, CancellationToken ct = default)
+    public async Task<PaginatedResponseDto<SpecialistListItemDto>> GetPagedAsync(int page, string? query = null, CancellationToken ct = default)
     {
         if (page < 1) page = 1;
 
-        var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, ct);
+        var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, query, ct);
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
 

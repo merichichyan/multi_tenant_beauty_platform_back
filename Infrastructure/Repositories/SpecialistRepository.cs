@@ -15,16 +15,22 @@ public class SpecialistRepository : ISpecialistRepository
     }
 
     public async Task<(IEnumerable<Specialist> Items, int TotalCount)> GetPagedAsync(
-        int page, int pageSize, CancellationToken cancellationToken = default)
+        int page, int pageSize, string? query = null, CancellationToken cancellationToken = default)
     {
-        var query = _context.Specialists
+        var dbQuery = _context.Specialists
             .Include(s => s.Services)
             .Where(s => s.Status == "Verified")
             .AsNoTracking();
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var q = query.Trim().ToLower();
+            dbQuery = dbQuery.Where(s => s.FullName.ToLower().Contains(q) || s.Email.ToLower().Contains(q));
+        }
 
-        var items = await query
+        var totalCount = await dbQuery.CountAsync(cancellationToken);
+
+        var items = await dbQuery
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

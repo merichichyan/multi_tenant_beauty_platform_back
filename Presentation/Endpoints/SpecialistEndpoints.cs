@@ -15,10 +15,10 @@ public static class SpecialistEndpoints
                        .WithTags("Specialists")
                        .RequireAuthorization();
 
-        group.MapGet("/", async (int page, ISpecialistService service, CancellationToken ct) =>
+        group.MapGet("/", async ([FromQuery] int page, [FromQuery] string? query, ISpecialistService service, CancellationToken ct) =>
         {
             if (page < 1) page = 1;
-            var result = await service.GetPagedAsync(page, ct);
+            var result = await service.GetPagedAsync(page, query, ct);
             return Results.Ok(result);
         })
         .WithSummary("Get paginated list of specialists (10 per page)")

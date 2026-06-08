@@ -150,6 +150,15 @@ using (var scope = app.Services.CreateScope())
             // Column already exists
         }
 
+        try
+        {
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"StaffMembers\" ADD COLUMN \"SpecialistId\" uuid NULL;");
+        }
+        catch (Exception)
+        {
+            // Column already exists
+        }
+
         context.Database.ExecuteSqlRaw(@"
             CREATE TABLE IF NOT EXISTS ""FavoriteSalons"" (
                 ""Id"" uuid PRIMARY KEY,
