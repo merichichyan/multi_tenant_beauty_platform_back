@@ -50,6 +50,7 @@ public class SalonService : ISalonService
                 Title = sm.Title,
                 GraphicsUrl = sm.GraphicsUrl,
                 WorkingHours = sm.WorkingHours,
+                Status = sm.Status,
                 Services = sm.Services.Select(svc => new ServiceItemDto
                 {
                     Id = svc.Id,
@@ -103,6 +104,7 @@ public class SalonService : ISalonService
                 Title = sm.Title,
                 GraphicsUrl = sm.GraphicsUrl,
                 WorkingHours = sm.WorkingHours,
+                Status = sm.Status,
                 Services = sm.Services.Select(svc => new ServiceItemDto
                 {
                     Id = svc.Id,
@@ -177,6 +179,7 @@ public class SalonService : ISalonService
                 Title = sm.Title,
                 GraphicsUrl = sm.GraphicsUrl,
                 WorkingHours = sm.WorkingHours,
+                Status = sm.Status,
                 Services = sm.Services.Select(svc => new ServiceItemDto
                 {
                     Id = svc.Id,

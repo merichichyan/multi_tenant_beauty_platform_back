@@ -8,13 +8,14 @@ public class StaffMember
     public string? Title { get; private set; }
     public string? GraphicsUrl { get; private set; }
     public string? WorkingHours { get; private set; }
+    public string Status { get; private set; } = "Active";
 
     private readonly List<ServiceItem> _services = new();
     public IReadOnlyCollection<ServiceItem> Services => _services.AsReadOnly();
 
     protected StaffMember() { }
 
-    public StaffMember(Guid salonId, string fullName, string? title, string? graphicsUrl, string? workingHours = null)
+    public StaffMember(Guid salonId, string fullName, string? title, string? graphicsUrl, string? workingHours = null, string status = "Active")
     {
         Id = Guid.NewGuid();
         SalonId = salonId;
@@ -22,10 +23,16 @@ public class StaffMember
         Title = title;
         GraphicsUrl = graphicsUrl;
         WorkingHours = workingHours;
+        Status = status;
     }
 
     public void AddService(ServiceItem service)
     {
         _services.Add(service);
+    }
+
+    public void UpdateStatus(string status)
+    {
+        Status = status;
     }
 }

@@ -139,9 +139,17 @@ app.MapFavoriteEndpoints();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    
     try
     {
+        try
+        {
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"StaffMembers\" ADD COLUMN \"Status\" TEXT NOT NULL DEFAULT 'Active';");
+        }
+        catch (Exception)
+        {
+            // Column already exists
+        }
+
         context.Database.ExecuteSqlRaw(@"
             CREATE TABLE IF NOT EXISTS ""FavoriteSalons"" (
                 ""Id"" uuid PRIMARY KEY,

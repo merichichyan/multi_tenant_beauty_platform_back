@@ -27,5 +27,6 @@ public class StaffMemberDto
     public string? Title { get; set; }
     public string? GraphicsUrl { get; set; }
     public string? WorkingHours { get; set; }
+    public string Status { get; set; } = "Active";
     public List<ServiceItemDto> Services { get; set; } = [];
 }

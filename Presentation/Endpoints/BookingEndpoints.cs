@@ -25,16 +25,29 @@ public static class BookingEndpoints
                 return Results.Unauthorized();
             }
 
-            // Find specialist details to store
+            // Find specialist or staff member details to store
+            string specialistName = string.Empty;
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == request.SpecialistId, ct);
-            if (specialist == null)
+            if (specialist != null)
             {
-                return Results.NotFound(new { message = "Specialist not found" });
+                specialistName = specialist.FullName;
+            }
+            else
+            {
+                var staff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.Id == request.SpecialistId, ct);
+                if (staff != null)
+                {
+                    specialistName = staff.FullName;
+                }
+                else
+                {
+                    return Results.NotFound(new { message = "Specialist or Staff Member not found" });
+                }
             }
 
             var booking = new Booking(
                 request.SpecialistId,
-                specialist.FullName,
+                specialistName,
                 request.ServiceName,
                 request.Price,
                 request.DurationMinutes,
