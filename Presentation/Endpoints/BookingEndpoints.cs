@@ -306,19 +306,29 @@ public static class BookingEndpoints
                 return Results.NotFound(new { message = "Booking not found" });
             }
 
-            // Verify that the current user is a specialist and is the specialist for this booking
+            // Verify that the current user is authorized (either the specialist or the salon owner)
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
-            if (specialist == null)
-            {
-                return Results.Forbid();
-            }
+            bool isAuthorized = false;
 
-            bool isAuthorized = booking.SpecialistId == specialist.Id;
-            if (!isAuthorized)
+            if (specialist != null)
             {
-                // Check if the booking was made under a StaffMember ID linked to this specialist
-                var isLinkedStaff = await context.StaffMembers.AnyAsync(sm => sm.Id == booking.SpecialistId && sm.SpecialistId == specialist.Id, ct);
-                isAuthorized = isLinkedStaff;
+                isAuthorized = booking.SpecialistId == specialist.Id;
+                if (!isAuthorized)
+                {
+                    // Check if the booking was made under a StaffMember ID linked to this specialist
+                    var isLinkedStaff = await context.StaffMembers.AnyAsync(sm => sm.Id == booking.SpecialistId && sm.SpecialistId == specialist.Id, ct);
+                    isAuthorized = isLinkedStaff;
+                }
+            }
+            else
+            {
+                var salon = await context.Salons.Include(s => s.StaffMembers).FirstOrDefaultAsync(s => s.Id == userId, ct);
+                if (salon != null)
+                {
+                    isAuthorized = booking.SalonId == salon.Id || 
+                                   salon.StaffMembers.Any(sm => sm.Id == booking.SpecialistId) ||
+                                   (booking.SpecialistId != Guid.Empty && salon.StaffMembers.Any(sm => sm.SpecialistId == booking.SpecialistId));
+                }
             }
 
             if (!isAuthorized)

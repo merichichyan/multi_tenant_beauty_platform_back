@@ -47,16 +47,45 @@ public static class SalonEndpoints
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
 
             // In-memory calculations
-            var bookingsThisMonth = bookings.Count(b => b.SalonId == salon.Id && b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today);
-            var bookingsToday = bookings.Count(b => b.SalonId == salon.Id && b.BookingDate.Date == today);
+            var bookingsThisMonth = bookings.Count(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today);
+            var bookingsToday = bookings.Count(b => b.BookingDate.Date == today);
 
-            var incomeThisMonth = bookings.Where(b => b.SalonId == salon.Id && b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today)
+            var incomeThisMonth = bookings.Where(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today)
                                            .Sum(b => b.Price);
-            var incomeToday = bookings.Where(b => b.SalonId == salon.Id && b.BookingDate.Date == today)
+            var incomeToday = bookings.Where(b => b.BookingDate.Date == today)
                                        .Sum(b => b.Price);
 
             var totalStaffCount = salon.StaffMembers.Count;
             var presentTodayCount = salon.StaffMembers.Count(sm => sm.Status != "Off Duty");
+
+            // Look up user names for today's bookings
+            var userIds = bookings.Select(b => b.UserId).Distinct().ToList();
+            var users = await context.Users
+                                     .Where(u => userIds.Contains(u.Id))
+                                     .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
+
+            var todayBookingsList = bookings
+                .Where(b => b.BookingDate.Date == today)
+                .OrderBy(b => b.TimeSlot)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.SpecialistId,
+                    b.SpecialistName,
+                    b.ServiceName,
+                    b.Price,
+                    b.DurationMinutes,
+                    b.BookingDate,
+                    b.TimeSlot,
+                    b.UserId,
+                    b.UserEmail,
+                    b.CreatedAt,
+                    b.IsNoShow,
+                    b.SalonId,
+                    b.SalonName,
+                    UserName = users.TryGetValue(b.UserId, out var name) ? name : b.UserEmail
+                })
+                .ToList();
 
             return Results.Ok(new
             {
@@ -66,6 +95,7 @@ public static class SalonEndpoints
                 incomeToday,
                 presentTodayCount,
                 totalStaffCount,
+                todayBookings = todayBookingsList,
                 staffMembers = salon.StaffMembers.Select(sm => new
                 {
                     id = sm.Id,
@@ -87,6 +117,95 @@ public static class SalonEndpoints
             });
         })
         .WithSummary("Get salon dashboard statistics");
+
+        group.MapGet("/bookings", async (
+            [FromQuery] Guid? staffId,
+            [FromQuery] DateTime? date,
+            ClaimsPrincipal principal,
+            ApplicationDbContext context,
+            CancellationToken ct) =>
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var salonId))
+            {
+                return Results.Unauthorized();
+            }
+
+            var salon = await context.Salons
+                                     .Include(s => s.StaffMembers)
+                                     .FirstOrDefaultAsync(s => s.Id == salonId, ct);
+
+            if (salon == null)
+            {
+                return Results.NotFound(new { message = "Salon not found" });
+            }
+
+            var staffIds = salon.StaffMembers.Select(sm => sm.Id).ToList();
+            var linkedSpecialistIds = salon.StaffMembers
+                                           .Where(sm => sm.SpecialistId.HasValue)
+                                           .Select(sm => sm.SpecialistId!.Value)
+                                           .ToList();
+
+            var query = context.Bookings.Where(b => b.SalonId == salonId || staffIds.Contains(b.SpecialistId) || (b.SpecialistId != Guid.Empty && linkedSpecialistIds.Contains(b.SpecialistId)));
+
+            if (staffId.HasValue)
+            {
+                var staff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.Id == staffId.Value && sm.SalonId == salonId, ct);
+                if (staff != null)
+                {
+                    if (staff.SpecialistId.HasValue)
+                    {
+                        var specId = staff.SpecialistId.Value;
+                        query = query.Where(b => b.SpecialistId == staff.Id || b.SpecialistId == specId);
+                    }
+                    else
+                    {
+                        query = query.Where(b => b.SpecialistId == staff.Id);
+                    }
+                }
+                else
+                {
+                    return Results.Ok(new List<object>());
+                }
+            }
+
+            if (date.HasValue)
+            {
+                var targetDate = date.Value.Date;
+                query = query.Where(b => b.BookingDate.Date == targetDate);
+            }
+
+            var bookings = await query.OrderBy(b => b.BookingDate)
+                                      .ThenBy(b => b.TimeSlot)
+                                      .ToListAsync(ct);
+
+            var userIds = bookings.Select(b => b.UserId).Distinct().ToList();
+            var users = await context.Users
+                                     .Where(u => userIds.Contains(u.Id))
+                                     .ToDictionaryAsync(u => u.Id, u => u.FullName, ct);
+
+            var result = bookings.Select(b => new
+            {
+                b.Id,
+                b.SpecialistId,
+                b.SpecialistName,
+                b.ServiceName,
+                b.Price,
+                b.DurationMinutes,
+                b.BookingDate,
+                b.TimeSlot,
+                b.UserId,
+                b.UserEmail,
+                b.CreatedAt,
+                b.IsNoShow,
+                b.SalonId,
+                b.SalonName,
+                UserName = users.TryGetValue(b.UserId, out var name) ? name : b.UserEmail
+            });
+
+            return Results.Ok(result);
+        })
+        .WithSummary("Get bookings for the authenticated salon with optional filters by staff member and date");
 
         group.MapPatch("/staff/{staffId:guid}/status", async (Guid staffId, [FromBody] UpdateStaffStatusRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
         {
