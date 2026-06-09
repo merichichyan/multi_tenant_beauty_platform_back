@@ -46,13 +46,58 @@ public static class SalonEndpoints
             var today = DateTime.Today;
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
 
-            // In-memory calculations
+            var now = DateTime.Now;
+            bool IsCompleted(Booking b)
+            {
+                if (b.IsNoShow) return false;
+                try
+                {
+                    var slotParts = b.TimeSlot.Split('-');
+                    var endPart = slotParts[1].Trim();
+                    
+                    var isAmPm = endPart.ToLower().Contains("am") || endPart.ToLower().Contains("pm");
+                    int hour = 0, minute = 0;
+                    if (isAmPm)
+                    {
+                        var parts = endPart.Split(' ');
+                        var hm = parts[0].Split(':');
+                        hour = int.Parse(hm[0]);
+                        minute = int.Parse(hm[1]);
+                        if (parts[1].ToLower() == "pm" && hour < 12)
+                        {
+                            hour += 12;
+                        }
+                        else if (parts[1].ToLower() == "am" && hour == 12)
+                        {
+                            hour = 0;
+                        }
+                    }
+                    else
+                    {
+                        var hm = endPart.Split(':');
+                        hour = int.Parse(hm[0]);
+                        minute = int.Parse(hm[1]);
+                        if (hour < 8)
+                        {
+                            hour += 12;
+                        }
+                    }
+
+                    var endDateTime = b.BookingDate.Date.AddHours(hour).AddMinutes(minute);
+                    return now > endDateTime;
+                }
+                catch
+                {
+                    return b.BookingDate.Date < now.Date;
+                }
+            }
+
             var bookingsThisMonth = bookings.Count(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today);
             var bookingsToday = bookings.Count(b => b.BookingDate.Date == today);
 
-            var incomeThisMonth = bookings.Where(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today)
+            var incomeThisMonth = bookings.Where(b => b.BookingDate.Date >= startOfMonth && b.BookingDate.Date <= today && IsCompleted(b))
                                            .Sum(b => b.Price);
-            var incomeToday = bookings.Where(b => b.BookingDate.Date == today)
+            var incomeToday = bookings.Where(b => b.BookingDate.Date == today && IsCompleted(b))
                                        .Sum(b => b.Price);
 
             var totalStaffCount = salon.StaffMembers.Count;
