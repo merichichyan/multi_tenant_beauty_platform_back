@@ -146,7 +146,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.ExecuteSqlRaw(@"
                 DO $$
                 BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'StaffMembers' AND column_name = 'Status') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE LOWER(table_name) = 'staffmembers' AND LOWER(column_name) = 'status') THEN
                         ALTER TABLE ""StaffMembers"" ADD COLUMN ""Status"" TEXT NOT NULL DEFAULT 'Active';
                     END IF;
                 END $$;");
@@ -161,7 +161,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.ExecuteSqlRaw(@"
                 DO $$
                 BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'StaffMembers' AND column_name = 'SpecialistId') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE LOWER(table_name) = 'staffmembers' AND LOWER(column_name) = 'specialistid') THEN
                         ALTER TABLE ""StaffMembers"" ADD COLUMN ""SpecialistId"" uuid NULL;
                     END IF;
                 END $$;");
@@ -176,7 +176,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.ExecuteSqlRaw(@"
                 DO $$
                 BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Bookings' AND column_name = 'SalonId') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE LOWER(table_name) = 'bookings' AND LOWER(column_name) = 'salonid') THEN
                         ALTER TABLE ""Bookings"" ADD COLUMN ""SalonId"" uuid NULL;
                     END IF;
                 END $$;");
@@ -191,7 +191,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.ExecuteSqlRaw(@"
                 DO $$
                 BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Bookings' AND column_name = 'SalonName') THEN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE LOWER(table_name) = 'bookings' AND LOWER(column_name) = 'salonname') THEN
                         ALTER TABLE ""Bookings"" ADD COLUMN ""SalonName"" TEXT NULL;
                     END IF;
                 END $$;");
