@@ -43,6 +43,7 @@ public class ApplicationDbContext : DbContext
             entity.UseTpcMappingStrategy();
 
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.FullName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
             entity.Property(e => e.PasswordHash).IsRequired();

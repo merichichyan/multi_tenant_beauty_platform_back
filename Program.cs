@@ -143,38 +143,62 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
-            context.Database.ExecuteSqlRaw("ALTER TABLE \"StaffMembers\" ADD COLUMN \"Status\" TEXT NOT NULL DEFAULT 'Active';");
+            context.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'StaffMembers' AND column_name = 'Status') THEN
+                        ALTER TABLE ""StaffMembers"" ADD COLUMN ""Status"" TEXT NOT NULL DEFAULT 'Active';
+                    END IF;
+                END $$;");
         }
         catch (Exception)
         {
-            // Column already exists
+            // Column already exists or fallback safety
         }
 
         try
         {
-            context.Database.ExecuteSqlRaw("ALTER TABLE \"StaffMembers\" ADD COLUMN \"SpecialistId\" uuid NULL;");
+            context.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'StaffMembers' AND column_name = 'SpecialistId') THEN
+                        ALTER TABLE ""StaffMembers"" ADD COLUMN ""SpecialistId"" uuid NULL;
+                    END IF;
+                END $$;");
         }
         catch (Exception)
         {
-            // Column already exists
+            // Column already exists or fallback safety
         }
 
         try
         {
-            context.Database.ExecuteSqlRaw("ALTER TABLE \"Bookings\" ADD COLUMN \"SalonId\" uuid NULL;");
+            context.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Bookings' AND column_name = 'SalonId') THEN
+                        ALTER TABLE ""Bookings"" ADD COLUMN ""SalonId"" uuid NULL;
+                    END IF;
+                END $$;");
         }
         catch (Exception)
         {
-            // Column already exists
+            // Column already exists or fallback safety
         }
 
         try
         {
-            context.Database.ExecuteSqlRaw("ALTER TABLE \"Bookings\" ADD COLUMN \"SalonName\" TEXT NULL;");
+            context.Database.ExecuteSqlRaw(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Bookings' AND column_name = 'SalonName') THEN
+                        ALTER TABLE ""Bookings"" ADD COLUMN ""SalonName"" TEXT NULL;
+                    END IF;
+                END $$;");
         }
         catch (Exception)
         {
-            // Column already exists
+            // Column already exists or fallback safety
         }
 
         context.Database.ExecuteSqlRaw(@"
