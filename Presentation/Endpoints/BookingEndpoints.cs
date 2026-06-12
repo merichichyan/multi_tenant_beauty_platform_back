@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using multi_tenant_beauty_platform_back.Domain.Entities;
+using multi_tenant_beauty_platform_back.Domain.Services;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
 
 namespace multi_tenant_beauty_platform_back.Presentation.Endpoints;
@@ -16,7 +17,7 @@ public static class BookingEndpoints
                        .WithTags("Bookings")
                        .RequireAuthorization();
 
-        group.MapPost("/", async ([FromBody] CreateBookingRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapPost("/", async ([FromBody] CreateBookingRequest request, ClaimsPrincipal principal, ApplicationDbContext context, INotificationService notificationService, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             var emailClaim = principal.FindFirstValue(ClaimTypes.Email) ?? principal.Identity?.Name ?? "user@beautyplatform.com";
@@ -73,6 +74,19 @@ public static class BookingEndpoints
 
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(ct);
+
+            try
+            {
+                await notificationService.SendNotificationToUserAsync(
+                    resolvedSpecialistId,
+                    "New Booking Created",
+                    $"New appointment for {request.ServiceName} on {request.BookingDate:yyyy-MM-dd} at {request.TimeSlot}.",
+                    ct);
+            }
+            catch
+            {
+                // Push failure shouldn't prevent HTTP 201 response
+            }
 
             return Results.Created($"/api/bookings/{booking.Id}", booking);
         })
@@ -243,7 +257,7 @@ public static class BookingEndpoints
         })
         .WithSummary("Get specialist bookings");
 
-        group.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (Guid id, ClaimsPrincipal principal, ApplicationDbContext context, INotificationService notificationService, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -288,11 +302,24 @@ public static class BookingEndpoints
             context.Bookings.Remove(booking);
             await context.SaveChangesAsync(ct);
 
+            try
+            {
+                await notificationService.SendNotificationToUserAsync(
+                    booking.SpecialistId,
+                    "Booking Cancelled",
+                    $"Appointment for {booking.ServiceName} on {booking.BookingDate:yyyy-MM-dd} at {booking.TimeSlot} has been cancelled by the client.",
+                    ct);
+            }
+            catch
+            {
+                // Push failure shouldn't prevent successful cancel response
+            }
+
             return Results.Ok(new { message = "Booking cancelled successfully" });
         })
         .WithSummary("Cancel a booking");
 
-        group.MapPatch("/{id:guid}/no-show", async (Guid id, [FromQuery] bool isNoShow, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapPatch("/{id:guid}/no-show", async (Guid id, [FromQuery] bool isNoShow, ClaimsPrincipal principal, ApplicationDbContext context, INotificationService notificationService, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -338,6 +365,20 @@ public static class BookingEndpoints
 
             booking.MarkAsNoShow(isNoShow);
             await context.SaveChangesAsync(ct);
+
+            try
+            {
+                string pushTitle = isNoShow ? "Booking Marked as No-Show" : "No-Show Cancelled";
+                string pushMsg = isNoShow 
+                    ? $"Your appointment for {booking.ServiceName} on {booking.BookingDate:yyyy-MM-dd} at {booking.TimeSlot} was marked as a no-show."
+                    : $"Your appointment for {booking.ServiceName} on {booking.BookingDate:yyyy-MM-dd} at {booking.TimeSlot} no-show status has been removed.";
+
+                await notificationService.SendNotificationToUserAsync(booking.UserId, pushTitle, pushMsg, ct);
+            }
+            catch
+            {
+                // Push failure shouldn't prevent successful no-show toggle response
+            }
 
             return Results.Ok(new { message = "Booking no-show status updated successfully", isNoShow = booking.IsNoShow });
         })

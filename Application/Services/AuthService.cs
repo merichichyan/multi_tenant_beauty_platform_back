@@ -172,7 +172,7 @@ public class AuthService : IAuthService
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResponseDto(token, user.IsOnboardingCompleted, user.Role);
+        return new AuthResponseDto(token, user.IsOnboardingCompleted, user.Role, user.Id, user.Email);
     }
 
     public async Task CompleteOnboardingAsync(Guid userId, CancellationToken cancellationToken = default)

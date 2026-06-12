@@ -10,6 +10,7 @@ using multi_tenant_beauty_platform_back.Infrastructure.Authentication;
 using multi_tenant_beauty_platform_back.Infrastructure.BackgroundServices;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
 using multi_tenant_beauty_platform_back.Infrastructure.Repositories;
+using multi_tenant_beauty_platform_back.Infrastructure.Services;
 using multi_tenant_beauty_platform_back.Presentation.Endpoints;
 using multi_tenant_beauty_platform_back.Presentation.Middlewares;
 using multi_tenant_beauty_platform_back.Domain.Entities;
@@ -95,6 +96,9 @@ builder.Services.AddScoped<ISpecialistService, SpecialistService>();
 builder.Services.AddScoped<ISalonService, SalonService>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+// OneSignal Push Notification Service
+builder.Services.AddHttpClient<INotificationService, OneSignalNotificationService>();
 
 builder.Services.AddCors(options =>
 {
