@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,6 +11,32 @@ namespace multi_tenant_beauty_platform_back.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<Guid>(
+                name: "SpecialistId",
+                table: "StaffMembers",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "Status",
+                table: "StaffMembers",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "SalonId",
+                table: "Bookings",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "SalonName",
+                table: "Bookings",
+                type: "character varying(150)",
+                maxLength: 150,
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "FavoriteSalons",
                 columns: table => new
@@ -58,6 +84,22 @@ namespace multi_tenant_beauty_platform_back.Migrations
 
             migrationBuilder.DropTable(
                 name: "FavoriteSpecialists");
+
+            migrationBuilder.DropColumn(
+                name: "SpecialistId",
+                table: "StaffMembers");
+
+            migrationBuilder.DropColumn(
+                name: "Status",
+                table: "StaffMembers");
+
+            migrationBuilder.DropColumn(
+                name: "SalonId",
+                table: "Bookings");
+
+            migrationBuilder.DropColumn(
+                name: "SalonName",
+                table: "Bookings");
         }
     }
 }

@@ -1,0 +1,12 @@
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/*.db
+**/*.sqlite
+**/out
+Dockerfile
+.dockerignore

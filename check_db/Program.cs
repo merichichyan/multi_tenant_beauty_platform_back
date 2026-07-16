@@ -5,7 +5,7 @@ class CheckDbScript
 {
     public static void Run()
     {
-        string connString = "Host=localhost;Database=beauty_platform;Username=postgres;Password=Meri.652754;Trust Server Certificate=true";
+        string connString = "Host=ep-red-dream-at8tosch.c-9.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_GpLPRt1ej4iQ;SslMode=Require;Trust Server Certificate=true";
         try
         {
             using var conn = new NpgsqlConnection(connString);
