@@ -145,6 +145,17 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
+        Console.WriteLine("Applying pending migrations...");
+        context.Database.Migrate();
+        Console.WriteLine("Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Migration failed: {ex.Message}");
+    }
+
+    try
+    {
         try
         {
             context.Database.ExecuteSqlRaw(@"
