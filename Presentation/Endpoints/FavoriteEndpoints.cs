@@ -37,12 +37,29 @@ public static class FavoriteEndpoints
         })
         .WithSummary("Get list of favorited salon and specialist IDs for current user");
 
-        group.MapGet("/salons", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapGet("/salons", async (ClaimsPrincipal principal, ApplicationDbContext context, Microsoft.AspNetCore.Http.HttpContext httpContext, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
                 return Results.Unauthorized();
+            }
+
+            var lang = "en";
+            if (httpContext.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+            {
+                var l = langVal.ToString().ToLower();
+                if (l == "hy" || l == "ru" || l == "en") lang = l;
+            }
+            else
+            {
+                var acceptLanguage = httpContext.Request.Headers["Accept-Language"].ToString();
+                if (!string.IsNullOrEmpty(acceptLanguage))
+                {
+                    if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) lang = "hy";
+                    else if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) lang = "ru";
+                    else if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) lang = "en";
+                }
             }
 
             var favoriteSalonIds = await context.FavoriteSalons
@@ -66,13 +83,13 @@ public static class FavoriteEndpoints
                 Id = s.Id,
                 UserId = s.Id,
                 OwnerFullName = s.FullName,
-                SalonName = s.SalonName,
-                Address = s.Address,
+                SalonName = LocalizationHelper.LocalizeString(s.SalonName, lang),
+                Address = LocalizationHelper.LocalizeString(s.Address, lang),
                 Latitude = s.Latitude,
                 Longitude = s.Longitude,
-                Description = s.Description,
+                Description = LocalizationHelper.LocalizeString(s.Description, lang),
                 LogoUrl = s.LogoUrl,
-                OperatingHours = s.OperatingHours,
+                OperatingHours = LocalizationHelper.LocalizeString(s.OperatingHours, lang),
                 SocialMedias = s.SocialMedias,
                 PreferredColors = s.PreferredColors,
                 Rating = s.Rating,
@@ -111,12 +128,29 @@ public static class FavoriteEndpoints
         })
         .WithSummary("Get user's favorite salons");
 
-        group.MapGet("/specialists", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapGet("/specialists", async (ClaimsPrincipal principal, ApplicationDbContext context, Microsoft.AspNetCore.Http.HttpContext httpContext, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
                 return Results.Unauthorized();
+            }
+
+            var lang = "en";
+            if (httpContext.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+            {
+                var l = langVal.ToString().ToLower();
+                if (l == "hy" || l == "ru" || l == "en") lang = l;
+            }
+            else
+            {
+                var acceptLanguage = httpContext.Request.Headers["Accept-Language"].ToString();
+                if (!string.IsNullOrEmpty(acceptLanguage))
+                {
+                    if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) lang = "hy";
+                    else if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) lang = "ru";
+                    else if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) lang = "en";
+                }
             }
 
             var favoriteSpecialistIds = await context.FavoriteSpecialists
@@ -133,13 +167,13 @@ public static class FavoriteEndpoints
             {
                 Id = s.Id,
                 UserId = s.Id,
-                FullName = s.FullName,
-                Address = s.Address,
+                FullName = LocalizationHelper.LocalizeString(s.FullName, lang),
+                Address = LocalizationHelper.LocalizeString(s.Address, lang),
                 Latitude = s.Latitude,
                 Longitude = s.Longitude,
-                Description = s.Description,
+                Description = LocalizationHelper.LocalizeString(s.Description, lang),
                 LogoUrl = s.LogoUrl,
-                WorkingHours = s.WorkingHours,
+                WorkingHours = LocalizationHelper.LocalizeString(s.WorkingHours, lang),
                 SocialMedias = s.SocialMedias,
                 PreferredColors = s.PreferredColors,
                 Rating = s.Rating,

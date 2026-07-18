@@ -411,6 +411,7 @@ public class AuthService : IAuthService
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         user.UpdatePasswordHash(passwordHash);
+        user.UpdateStatus("Verified");
         await _userRepository.UpdateAsync(user, cancellationToken);
 
         return true;

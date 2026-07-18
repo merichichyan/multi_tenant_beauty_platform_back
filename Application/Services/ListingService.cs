@@ -56,7 +56,7 @@ public class ListingService : IListingService
             Address: LocalizationHelper.LocalizeString(s.Address, lang),
             LogoUrl: s.LogoUrl,
             Description: LocalizationHelper.LocalizeString(s.Description, lang),
-            WorkingHours: s.WorkingHours,
+            WorkingHours: LocalizationHelper.LocalizeString(s.WorkingHours, lang),
             PreferredColors: s.PreferredColors,
             Services: s.Services
                 .Select(svc => new ServiceItemDto(svc.Name, svc.Category, svc.Price, svc.DurationMinutes, svc.IsActive))
@@ -90,7 +90,7 @@ public class ListingService : IListingService
             Address: LocalizationHelper.LocalizeString(s.Address, lang),
             LogoUrl: s.LogoUrl,
             Description: LocalizationHelper.LocalizeString(s.Description, lang),
-            OperatingHours: s.OperatingHours,
+            OperatingHours: LocalizationHelper.LocalizeString(s.OperatingHours, lang),
             PreferredColors: s.PreferredColors,
             StaffMembers: s.StaffMembers
                 .Select(sm => {

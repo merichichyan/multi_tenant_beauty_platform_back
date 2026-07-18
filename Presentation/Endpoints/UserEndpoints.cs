@@ -13,7 +13,7 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/api/users").WithTags("Users");
 
-        group.MapGet("/me", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        group.MapGet("/me", async (ClaimsPrincipal principal, ApplicationDbContext context, Microsoft.AspNetCore.Http.HttpContext httpContext, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -25,6 +25,23 @@ public static class UserEndpoints
             if (user == null)
             {
                 return Results.NotFound(new { message = "User not found" });
+            }
+
+            var lang = "en";
+            if (httpContext.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+            {
+                var l = langVal.ToString().ToLower();
+                if (l == "hy" || l == "ru" || l == "en") lang = l;
+            }
+            else
+            {
+                var acceptLanguage = httpContext.Request.Headers["Accept-Language"].ToString();
+                if (!string.IsNullOrEmpty(acceptLanguage))
+                {
+                    if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) lang = "hy";
+                    else if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) lang = "ru";
+                    else if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) lang = "en";
+                }
             }
 
             string? logoUrl = null;
@@ -41,11 +58,11 @@ public static class UserEndpoints
             if (specialist != null)
             {
                 logoUrl = specialist.LogoUrl;
-                address = specialist.Address;
-                description = specialist.Description;
+                address = LocalizationHelper.LocalizeString(specialist.Address, lang);
+                description = LocalizationHelper.LocalizeString(specialist.Description, lang);
                 socialMedias = specialist.SocialMedias;
                 preferredColors = specialist.PreferredColors;
-                workingHours = specialist.WorkingHours;
+                workingHours = LocalizationHelper.LocalizeString(specialist.WorkingHours, lang);
                 latitude = specialist.Latitude;
                 longitude = specialist.Longitude;
             }
@@ -55,12 +72,12 @@ public static class UserEndpoints
                 if (salon != null)
                 {
                     logoUrl = salon.LogoUrl;
-                    address = salon.Address;
-                    description = salon.Description;
+                    address = LocalizationHelper.LocalizeString(salon.Address, lang);
+                    description = LocalizationHelper.LocalizeString(salon.Description, lang);
                     socialMedias = salon.SocialMedias;
                     preferredColors = salon.PreferredColors;
-                    workingHours = salon.OperatingHours;
-                    salonName = salon.SalonName;
+                    workingHours = LocalizationHelper.LocalizeString(salon.OperatingHours, lang);
+                    salonName = LocalizationHelper.LocalizeString(salon.SalonName, lang);
                     latitude = salon.Latitude;
                     longitude = salon.Longitude;
                 }
