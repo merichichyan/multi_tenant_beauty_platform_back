@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using multi_tenant_beauty_platform_back.Application.DTOs;
 using multi_tenant_beauty_platform_back.Domain.Entities;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
+using multi_tenant_beauty_platform_back.Application.Services;
 
 namespace multi_tenant_beauty_platform_back.Presentation.Endpoints;
 
