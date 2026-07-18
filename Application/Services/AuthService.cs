@@ -395,7 +395,7 @@ public class AuthService : IAuthService
         var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
         if (user == null)
         {
-            throw new NotFoundException("User not found with email: " + email);
+            throw new NotFoundException(nameof(User), email);
         }
 
         bool isUnactivated = string.IsNullOrEmpty(user.PasswordHash) || 
