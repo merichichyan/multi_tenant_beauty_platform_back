@@ -19,6 +19,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -302,6 +303,28 @@ using (var scope = app.Services.CreateScope())
                     Console.WriteLine("Updated existing service categories with localized translations.");
                 }
             }
+            var existingAdmin = context.Users.FirstOrDefault(u => u.Email == "merichichyan");
+            if (existingAdmin == null)
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword("Meri.12345");
+                var admin = new User(
+                    email: "merichichyan",
+                    passwordHash: passwordHash,
+                    fullName: "merichichyan",
+                    role: "admin",
+                    phone: "+37499000000"
+                );
+                context.Users.Add(admin);
+                context.SaveChanges();
+                Console.WriteLine("Seeded admin user 'merichichyan'.");
+            }
+            else
+            {
+                existingAdmin.UpdatePasswordHash(BCrypt.Net.BCrypt.HashPassword("Meri.12345"));
+                existingAdmin.UpdateRole("admin");
+                context.SaveChanges();
+                Console.WriteLine("Updated admin user 'merichichyan' password and role.");
+            }
 
             if (!context.Salons.Any())
             {
@@ -310,6 +333,7 @@ using (var scope = app.Services.CreateScope())
                     email: "maison@noire.com",
                     passwordHash: passwordHash,
                     salonName: "Maison Noire",
+                    ownerFullName: "Ani Petrosyan",
                     role: "Salon",
                     phone: "+37499111222",
                     deviceId: "salon_device_1",
@@ -330,6 +354,7 @@ using (var scope = app.Services.CreateScope())
                     email: "aura@veil.com",
                     passwordHash: passwordHash,
                     salonName: "Aura & Veil",
+                    ownerFullName: "Nare Grigoryan",
                     role: "Salon",
                     phone: "+37499333444",
                     deviceId: "salon_device_2",
@@ -350,6 +375,7 @@ using (var scope = app.Services.CreateScope())
                     email: "sage@studio.com",
                     passwordHash: passwordHash,
                     salonName: "Sage Studio",
+                    ownerFullName: "Lilit Mkrtchyan",
                     role: "Salon",
                     phone: "+37499555666",
                     deviceId: "salon_device_3",

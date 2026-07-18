@@ -12,8 +12,7 @@ public static class SpecialistEndpoints
     public static IEndpointRouteBuilder MapSpecialistEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/specialists")
-                       .WithTags("Specialists")
-                       .RequireAuthorization();
+                       .WithTags("Specialists");
 
         group.MapGet("/", async ([FromQuery] int page, [FromQuery] string? query, ISpecialistService service, CancellationToken ct) =>
         {
@@ -81,6 +80,7 @@ public static class SpecialistEndpoints
                 }
             });
         })
+        .RequireAuthorization()
         .WithSummary("Add service to specialist");
 
         group.MapPatch("/services/{serviceId:guid}/toggle", async (Guid serviceId, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -106,6 +106,7 @@ public static class SpecialistEndpoints
                 isActive = service.IsActive
             });
         })
+        .RequireAuthorization()
         .WithSummary("Toggle service active status");
 
         group.MapDelete("/services/{serviceId:guid}", async (Guid serviceId, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -127,6 +128,7 @@ public static class SpecialistEndpoints
 
             return Results.Ok(new { message = "Service deleted successfully" });
         })
+        .RequireAuthorization()
         .WithSummary("Delete service from specialist");
 
         return app;

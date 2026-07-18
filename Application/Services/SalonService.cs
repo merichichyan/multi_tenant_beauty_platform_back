@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using multi_tenant_beauty_platform_back.Application.DTOs;
 using multi_tenant_beauty_platform_back.Domain.Repositories;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 
 namespace multi_tenant_beauty_platform_back.Application.Services;
 
@@ -11,11 +12,35 @@ public class SalonService : ISalonService
 
     private readonly ISalonRepository _repository;
     private readonly ApplicationDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public SalonService(ISalonRepository repository, ApplicationDbContext context)
+    public SalonService(ISalonRepository repository, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _repository = repository;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private string GetLanguage()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) return "en";
+
+        if (context.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+        {
+            var lang = langVal.ToString().ToLower();
+            if (lang == "hy" || lang == "ru" || lang == "en") return lang;
+        }
+
+        var acceptLanguage = context.Request.Headers["Accept-Language"].ToString();
+        if (!string.IsNullOrEmpty(acceptLanguage))
+        {
+            if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) return "hy";
+            if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) return "ru";
+            if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) return "en";
+        }
+
+        return "en";
     }
 
     public async Task<PaginatedResponseDto<SalonListItemDto>> GetPagedAsync(int page, CancellationToken ct = default)
@@ -25,6 +50,7 @@ public class SalonService : ISalonService
         var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, ct);
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+        var lang = GetLanguage();
 
         var salonsList = items.ToList();
         var specIds = salonsList.SelectMany(s => s.StaffMembers).Where(sm => sm.SpecialistId.HasValue).Select(sm => sm.SpecialistId.Value).Distinct().ToList();
@@ -37,11 +63,11 @@ public class SalonService : ISalonService
             Id = s.Id,
             UserId = s.Id,
             OwnerFullName = s.FullName,
-            SalonName = s.SalonName,
-            Address = s.Address,
+            SalonName = LocalizationHelper.LocalizeString(s.SalonName, lang),
+            Address = LocalizationHelper.LocalizeString(s.Address, lang),
             Latitude = s.Latitude,
             Longitude = s.Longitude,
-            Description = s.Description,
+            Description = LocalizationHelper.LocalizeString(s.Description, lang),
             LogoUrl = s.LogoUrl,
             OperatingHours = s.OperatingHours,
             SocialMedias = s.SocialMedias,
@@ -100,16 +126,18 @@ public class SalonService : ISalonService
             .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
             .ToListAsync(ct);
 
+        var lang = GetLanguage();
+
         return new SalonListItemDto
         {
             Id = salon.Id,
             UserId = salon.Id,
             OwnerFullName = salon.FullName,
-            SalonName = salon.SalonName,
-            Address = salon.Address,
+            SalonName = LocalizationHelper.LocalizeString(salon.SalonName, lang),
+            Address = LocalizationHelper.LocalizeString(salon.Address, lang),
             Latitude = salon.Latitude,
             Longitude = salon.Longitude,
-            Description = salon.Description,
+            Description = LocalizationHelper.LocalizeString(salon.Description, lang),
             LogoUrl = salon.LogoUrl,
             OperatingHours = salon.OperatingHours,
             SocialMedias = salon.SocialMedias,
@@ -207,16 +235,18 @@ public class SalonService : ISalonService
             .Select(x => x.Salon)
             .ToList();
 
+        var lang = GetLanguage();
+
         return sorted.Select(s => new SalonListItemDto
         {
             Id = s.Id,
             UserId = s.Id,
             OwnerFullName = s.FullName,
-            SalonName = s.SalonName,
-            Address = s.Address,
+            SalonName = LocalizationHelper.LocalizeString(s.SalonName, lang),
+            Address = LocalizationHelper.LocalizeString(s.Address, lang),
             Latitude = s.Latitude,
             Longitude = s.Longitude,
-            Description = s.Description,
+            Description = LocalizationHelper.LocalizeString(s.Description, lang),
             LogoUrl = s.LogoUrl,
             OperatingHours = s.OperatingHours,
             SocialMedias = s.SocialMedias,

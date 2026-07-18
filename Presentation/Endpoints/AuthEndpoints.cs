@@ -52,6 +52,14 @@ public static class AuthEndpoints
         .WithSummary("Log in an existing user")
         .WithDescription("Authenticates a user and returns a JWT token along with onboarding status.");
 
+        authGroup.MapPost("/activate", async ([FromBody] ActivateRequestDto request, IAuthService authService, CancellationToken ct) =>
+        {
+            var result = await authService.ActivateAccountAsync(request, ct);
+            return Results.Ok(new { success = result, message = "Account activated successfully." });
+        })
+        .WithSummary("Activate account and set password")
+        .WithDescription("Activates a user's account by updating their temporary password hash to a user-provided one.");
+
         authGroup.MapPost("/select-role", async ([FromBody] SelectRoleRequestDto request, IAuthService authService, CancellationToken ct) =>
         {
             await authService.SelectRoleAsync(request, ct);

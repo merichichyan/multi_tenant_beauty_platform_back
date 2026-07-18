@@ -12,8 +12,7 @@ public static class SalonEndpoints
     public static IEndpointRouteBuilder MapSalonEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/salons")
-                       .WithTags("Salons")
-                       .RequireAuthorization();
+                       .WithTags("Salons");
 
         group.MapGet("/dashboard", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
         {
@@ -161,6 +160,7 @@ public static class SalonEndpoints
                 }).ToList()
             });
         })
+        .RequireAuthorization()
         .WithSummary("Get salon dashboard statistics");
 
         group.MapGet("/bookings", async (
@@ -250,6 +250,7 @@ public static class SalonEndpoints
 
             return Results.Ok(result);
         })
+        .RequireAuthorization()
         .WithSummary("Get bookings for the authenticated salon with optional filters by staff member and date");
 
         group.MapPatch("/staff/{staffId:guid}/status", async (Guid staffId, [FromBody] UpdateStaffStatusRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -276,6 +277,7 @@ public static class SalonEndpoints
 
             return Results.Ok(new { message = "Staff status updated successfully", status = staff.Status });
         })
+        .RequireAuthorization()
         .WithSummary("Update a staff member's status");
 
         group.MapGet("/", async (int page, ISalonService service, CancellationToken ct) =>
@@ -347,6 +349,7 @@ public static class SalonEndpoints
                 hasPreviousPage = pageNumber > 1
             });
         })
+        .RequireAuthorization()
         .WithSummary("Get paginated list of staff members for salon");
 
         group.MapPost("/staff", async ([FromBody] CreateStaffRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -388,6 +391,7 @@ public static class SalonEndpoints
                 specialistId = staff.SpecialistId
             });
         })
+        .RequireAuthorization()
         .WithSummary("Add a new staff member or link an existing specialist");
 
         group.MapPut("/staff/{staffId:guid}", async (Guid staffId, [FromBody] UpdateStaffRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -414,6 +418,7 @@ public static class SalonEndpoints
 
             return Results.Ok(new { message = "Staff member updated successfully" });
         })
+        .RequireAuthorization()
         .WithSummary("Update a staff member's details");
 
         group.MapDelete("/staff/{staffId:guid}", async (Guid staffId, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -440,6 +445,7 @@ public static class SalonEndpoints
 
             return Results.Ok(new { message = "Staff member deactivated successfully" });
         })
+        .RequireAuthorization()
         .WithSummary("Deactivate (soft delete) a staff member");
 
         group.MapPost("/staff/{staffId:guid}/activate", async (Guid staffId, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
@@ -466,6 +472,7 @@ public static class SalonEndpoints
 
             return Results.Ok(new { message = "Staff member activated successfully" });
         })
+        .RequireAuthorization()
         .WithSummary("Activate a deactivated staff member");
 
         return app;

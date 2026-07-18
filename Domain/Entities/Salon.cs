@@ -20,10 +20,10 @@ public class Salon : User
 
     protected Salon() : base() { }
 
-    public Salon(string email, string passwordHash, string salonName, string role, string? phone, string? deviceId,
+    public Salon(string email, string passwordHash, string salonName, string ownerFullName, string role, string? phone, string? deviceId,
         string address, double? latitude, double? longitude, string? description, string? socialMedias, string? logoUrl, string? preferredColors, string? operatingHours,
         double rating = 4.5, decimal startingPrice = 50, string availabilityStatus = "AVAILABLE TODAY")
-        : base(email, passwordHash, salonName, role, phone, null, null, deviceId)
+        : base(email, passwordHash, ownerFullName, role, phone, null, null, deviceId)
     {
         SalonName = salonName;
         Address = address;

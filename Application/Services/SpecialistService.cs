@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using multi_tenant_beauty_platform_back.Application.DTOs;
 using multi_tenant_beauty_platform_back.Domain.Repositories;
 using multi_tenant_beauty_platform_back.Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 
 namespace multi_tenant_beauty_platform_back.Application.Services;
 
@@ -11,11 +12,35 @@ public class SpecialistService : ISpecialistService
 
     private readonly ISpecialistRepository _repository;
     private readonly ApplicationDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public SpecialistService(ISpecialistRepository repository, ApplicationDbContext context)
+    public SpecialistService(ISpecialistRepository repository, ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _repository = repository;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private string GetLanguage()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null) return "en";
+
+        if (context.Request.Query.TryGetValue("lang", out var langVal) && !string.IsNullOrEmpty(langVal))
+        {
+            var lang = langVal.ToString().ToLower();
+            if (lang == "hy" || lang == "ru" || lang == "en") return lang;
+        }
+
+        var acceptLanguage = context.Request.Headers["Accept-Language"].ToString();
+        if (!string.IsNullOrEmpty(acceptLanguage))
+        {
+            if (acceptLanguage.Contains("hy", StringComparison.OrdinalIgnoreCase)) return "hy";
+            if (acceptLanguage.Contains("ru", StringComparison.OrdinalIgnoreCase)) return "ru";
+            if (acceptLanguage.Contains("en", StringComparison.OrdinalIgnoreCase)) return "en";
+        }
+
+        return "en";
     }
 
     public async Task<PaginatedResponseDto<SpecialistListItemDto>> GetPagedAsync(int page, string? query = null, CancellationToken ct = default)
@@ -25,16 +50,17 @@ public class SpecialistService : ISpecialistService
         var (items, totalCount) = await _repository.GetPagedAsync(page, PageSize, query, ct);
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+        var lang = GetLanguage();
 
         var dtos = items.Select(s => new SpecialistListItemDto
         {
             Id = s.Id,
             UserId = s.Id,
-            FullName = s.FullName,
-            Address = s.Address,
+            FullName = LocalizationHelper.LocalizeString(s.FullName, lang),
+            Address = LocalizationHelper.LocalizeString(s.Address, lang),
             Latitude = s.Latitude,
             Longitude = s.Longitude,
-            Description = s.Description,
+            Description = LocalizationHelper.LocalizeString(s.Description, lang),
             LogoUrl = s.LogoUrl,
             WorkingHours = s.WorkingHours,
             SocialMedias = s.SocialMedias,
@@ -70,15 +96,17 @@ public class SpecialistService : ISpecialistService
         var specialist = await _repository.GetByIdAsync(id, ct);
         if (specialist is null) return null;
 
+        var lang = GetLanguage();
+
         return new SpecialistListItemDto
         {
             Id = specialist.Id,
             UserId = specialist.Id,
-            FullName = specialist.FullName,
-            Address = specialist.Address,
+            FullName = LocalizationHelper.LocalizeString(specialist.FullName, lang),
+            Address = LocalizationHelper.LocalizeString(specialist.Address, lang),
             Latitude = specialist.Latitude,
             Longitude = specialist.Longitude,
-            Description = specialist.Description,
+            Description = LocalizationHelper.LocalizeString(specialist.Description, lang),
             LogoUrl = specialist.LogoUrl,
             WorkingHours = specialist.WorkingHours,
             SocialMedias = specialist.SocialMedias,
@@ -107,15 +135,17 @@ public class SpecialistService : ISpecialistService
             .Take(5)
             .ToListAsync(ct);
 
+        var lang = GetLanguage();
+
         return specialists.Select(s => new SpecialistListItemDto
         {
             Id = s.Id,
             UserId = s.Id,
-            FullName = s.FullName,
-            Address = s.Address,
+            FullName = LocalizationHelper.LocalizeString(s.FullName, lang),
+            Address = LocalizationHelper.LocalizeString(s.Address, lang),
             Latitude = s.Latitude,
             Longitude = s.Longitude,
-            Description = s.Description,
+            Description = LocalizationHelper.LocalizeString(s.Description, lang),
             LogoUrl = s.LogoUrl,
             WorkingHours = s.WorkingHours,
             SocialMedias = s.SocialMedias,
@@ -171,15 +201,17 @@ public class SpecialistService : ISpecialistService
             .Select(x => x.Specialist)
             .ToList();
 
+        var lang = GetLanguage();
+
         return sorted.Select(s => new SpecialistListItemDto
         {
             Id = s.Id,
             UserId = s.Id,
-            FullName = s.FullName,
-            Address = s.Address,
+            FullName = LocalizationHelper.LocalizeString(s.FullName, lang),
+            Address = LocalizationHelper.LocalizeString(s.Address, lang),
             Latitude = s.Latitude,
             Longitude = s.Longitude,
-            Description = s.Description,
+            Description = LocalizationHelper.LocalizeString(s.Description, lang),
             LogoUrl = s.LogoUrl,
             WorkingHours = s.WorkingHours,
             SocialMedias = s.SocialMedias,

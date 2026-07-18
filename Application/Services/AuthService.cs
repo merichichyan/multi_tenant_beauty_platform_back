@@ -72,7 +72,8 @@ public class AuthService : IAuthService
             });
         }
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        var password = string.IsNullOrWhiteSpace(request.Password) ? "Meri.12345" : request.Password;
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
         var specialist = new Specialist(
             request.Email,
             passwordHash,
@@ -118,11 +119,14 @@ public class AuthService : IAuthService
             });
         }
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        var password = string.IsNullOrWhiteSpace(request.Password) ? "Meri.12345" : request.Password;
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        var ownerName = string.IsNullOrWhiteSpace(request.OwnerFullName) ? request.Email : request.OwnerFullName;
         var salon = new Salon(
             request.Email,
             passwordHash,
             request.SalonName,
+            ownerName,
             request.Role.ToLower().Trim(),
             request.Phone,
             request.DeviceId,
@@ -292,10 +296,6 @@ public class AuthService : IAuthService
         {
             errors.Add(nameof(request.Email), new[] { "Email is required." });
         }
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            errors.Add(nameof(request.Password), new[] { "Password is required." });
-        }
         if (string.IsNullOrWhiteSpace(request.FullName))
         {
             errors.Add(nameof(request.FullName), new[] { "Full name is required." });
@@ -329,10 +329,6 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(request.Email))
         {
             errors.Add(nameof(request.Email), new[] { "Email is required." });
-        }
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            errors.Add(nameof(request.Password), new[] { "Password is required." });
         }
         if (string.IsNullOrWhiteSpace(request.SalonName))
         {
@@ -377,5 +373,46 @@ public class AuthService : IAuthService
         {
             throw new ValidationException(errors);
         }
+    }
+
+    public async Task<bool> ActivateAccountAsync(ActivateRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            errors.Add(nameof(request.Email), new[] { "Email is required." });
+        }
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            errors.Add(nameof(request.Password), new[] { "Password is required." });
+        }
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
+
+        var email = request.Email.Trim().ToLower();
+        var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+        if (user == null)
+        {
+            throw new NotFoundException("User not found with email: " + email);
+        }
+
+        bool isUnactivated = string.IsNullOrEmpty(user.PasswordHash) || 
+                             BCrypt.Net.BCrypt.Verify("Meri.12345", user.PasswordHash);
+
+        if (!isUnactivated)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                { "Account", new[] { "This account is already activated." } }
+            });
+        }
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        user.UpdatePasswordHash(passwordHash);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
+        return true;
     }
 }
