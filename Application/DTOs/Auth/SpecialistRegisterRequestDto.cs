@@ -26,5 +26,6 @@ public record SpecialistRegisterRequestDto(
     [property: JsonPropertyName("services")] List<ServiceDto> Services,
     [property: JsonPropertyName("deviceId")] string? DeviceId,
     [property: JsonPropertyName("birthday")] DateTime? Birthday,
-    [property: JsonPropertyName("gender")] string? Gender
+    [property: JsonPropertyName("gender")] string? Gender,
+    [property: JsonPropertyName("salonId")] Guid? SalonId = null
 );

@@ -90,7 +90,8 @@ public class AuthService : IAuthService
             request.PreferredColors,
             request.WorkingHours,
             birthday: request.Birthday,
-            gender: request.Gender
+            gender: request.Gender,
+            salonId: request.SalonId
         );
 
         if (request.Services != null)

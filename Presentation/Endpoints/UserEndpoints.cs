@@ -54,6 +54,8 @@ public static class UserEndpoints
             double? latitude = null;
             double? longitude = null;
 
+            Guid? salonId = null;
+
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
             if (specialist != null)
             {
@@ -65,6 +67,16 @@ public static class UserEndpoints
                 workingHours = LocalizationHelper.LocalizeString(specialist.WorkingHours, lang);
                 latitude = specialist.Latitude;
                 longitude = specialist.Longitude;
+                salonId = specialist.SalonId;
+
+                if (specialist.SalonId.HasValue)
+                {
+                    var salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == specialist.SalonId.Value, ct);
+                    if (salon != null)
+                    {
+                        salonName = LocalizationHelper.LocalizeString(salon.SalonName, lang);
+                    }
+                }
             }
             else
             {
@@ -80,7 +92,18 @@ public static class UserEndpoints
                     salonName = LocalizationHelper.LocalizeString(salon.SalonName, lang);
                     latitude = salon.Latitude;
                     longitude = salon.Longitude;
+                    salonId = salon.Id;
                 }
+            }
+
+            string? rejectionReason = null;
+            if (user.Status == "Rejected")
+            {
+                var latestLetter = await context.Letters
+                    .Where(l => l.UserId == userId)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .FirstOrDefaultAsync(ct);
+                rejectionReason = latestLetter?.Content;
             }
 
             return Results.Ok(new
@@ -88,7 +111,7 @@ public static class UserEndpoints
                 id = user.Id,
                 fullName = user.FullName,
                 email = user.Email,
-                role = user.Role,
+                role = specialist != null ? "specialist" : (salon != null ? "salon" : user.Role),
                 status = user.Status,
                 phone = user.Phone,
                 gender = user.Gender,
@@ -99,10 +122,12 @@ public static class UserEndpoints
                 socialMedias = socialMedias,
                 preferredColors = preferredColors,
                 workingHours = workingHours,
+                salonId = salonId,
                 salonName = salonName,
                 latitude = latitude,
                 longitude = longitude,
-                rating = specialist != null ? specialist.Rating : (double?)null
+                rating = specialist != null ? specialist.Rating : (double?)null,
+                rejectionReason = rejectionReason
             });
         })
         .RequireAuthorization()
@@ -167,7 +192,8 @@ public static class UserEndpoints
                     request.SocialMedias,
                     request.LogoUrl,
                     request.PreferredColors,
-                    request.WorkingHours
+                    request.WorkingHours,
+                    request.SalonId
                 );
             }
             else
@@ -187,6 +213,11 @@ public static class UserEndpoints
                         request.WorkingHours
                     );
                 }
+            }
+
+            if (user.Status == "Rejected")
+            {
+                user.UpdateStatus("Pending");
             }
 
             await context.SaveChangesAsync(ct);
@@ -300,7 +331,8 @@ public record UpdateProfileRequest(
     string? LogoUrl,
     string? PreferredColors,
     string? WorkingHours,
-    string? SalonName
+    string? SalonName,
+    Guid? SalonId = null
 );
 
 public record UpdatePasswordRequest(

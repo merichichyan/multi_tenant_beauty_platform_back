@@ -51,6 +51,7 @@ public class SpecialistService : ISpecialistService
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
         var lang = GetLanguage();
+        var salonNames = await GetSalonNamesAsync(items.Select(s => s.SalonId), lang, ct);
 
         var dtos = items.Select(s => new SpecialistListItemDto
         {
@@ -68,6 +69,8 @@ public class SpecialistService : ISpecialistService
             Rating = s.Rating,
             StartingPrice = s.StartingPrice,
             AvailabilityStatus = s.AvailabilityStatus,
+            SalonId = s.SalonId,
+            SalonName = s.SalonId.HasValue && salonNames.TryGetValue(s.SalonId.Value, out var sn) ? sn : null,
             Services = s.Services.Select(svc => new ServiceItemDto
             {
                 Id = svc.Id,
@@ -97,6 +100,12 @@ public class SpecialistService : ISpecialistService
         if (specialist is null) return null;
 
         var lang = GetLanguage();
+        string? salonName = null;
+        if (specialist.SalonId.HasValue)
+        {
+            var salonMap = await GetSalonNamesAsync(new[] { specialist.SalonId }, lang, ct);
+            salonMap.TryGetValue(specialist.SalonId.Value, out salonName);
+        }
 
         return new SpecialistListItemDto
         {
@@ -114,6 +123,8 @@ public class SpecialistService : ISpecialistService
             Rating = specialist.Rating,
             StartingPrice = specialist.StartingPrice,
             AvailabilityStatus = specialist.AvailabilityStatus,
+            SalonId = specialist.SalonId,
+            SalonName = salonName,
             Services = specialist.Services.Select(svc => new ServiceItemDto
             {
                 Id = svc.Id,
@@ -136,6 +147,7 @@ public class SpecialistService : ISpecialistService
             .ToListAsync(ct);
 
         var lang = GetLanguage();
+        var salonNames = await GetSalonNamesAsync(specialists.Select(s => s.SalonId), lang, ct);
 
         return specialists.Select(s => new SpecialistListItemDto
         {
@@ -153,6 +165,8 @@ public class SpecialistService : ISpecialistService
             Rating = s.Rating,
             StartingPrice = s.StartingPrice,
             AvailabilityStatus = s.AvailabilityStatus,
+            SalonId = s.SalonId,
+            SalonName = s.SalonId.HasValue && salonNames.TryGetValue(s.SalonId.Value, out var sn) ? sn : null,
             Services = s.Services.Select(svc => new ServiceItemDto
             {
                 Id = svc.Id,
@@ -202,6 +216,7 @@ public class SpecialistService : ISpecialistService
             .ToList();
 
         var lang = GetLanguage();
+        var salonNames = await GetSalonNamesAsync(sorted.Select(s => s.SalonId), lang, ct);
 
         return sorted.Select(s => new SpecialistListItemDto
         {
@@ -219,6 +234,8 @@ public class SpecialistService : ISpecialistService
             Rating = s.Rating,
             StartingPrice = s.StartingPrice,
             AvailabilityStatus = s.AvailabilityStatus,
+            SalonId = s.SalonId,
+            SalonName = s.SalonId.HasValue && salonNames.TryGetValue(s.SalonId.Value, out var sn) ? sn : null,
             Services = s.Services.Select(svc => new ServiceItemDto
             {
                 Id = svc.Id,
@@ -229,6 +246,22 @@ public class SpecialistService : ISpecialistService
                 IsActive = svc.IsActive
             }).ToList()
         }).ToList();
+    }
+
+    private async Task<Dictionary<Guid, string>> GetSalonNamesAsync(IEnumerable<Guid?> salonIds, string lang, CancellationToken ct)
+    {
+        var validIds = salonIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+        if (!validIds.Any()) return new Dictionary<Guid, string>();
+
+        var salons = await _context.Salons
+            .Where(s => validIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.SalonName })
+            .ToListAsync(ct);
+
+        return salons.ToDictionary(
+            s => s.Id,
+            s => LocalizationHelper.LocalizeString(s.SalonName, lang)
+        );
     }
 
     private static double GetDistance(double lat1, double lon1, double? lat2, double? lon2)

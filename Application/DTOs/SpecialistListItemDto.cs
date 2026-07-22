@@ -16,6 +16,8 @@ public class SpecialistListItemDto
     public double Rating { get; set; }
     public decimal StartingPrice { get; set; }
     public string AvailabilityStatus { get; set; } = string.Empty;
+    public Guid? SalonId { get; set; }
+    public string? SalonName { get; set; }
     public List<ServiceItemDto> Services { get; set; } = [];
 }
 
