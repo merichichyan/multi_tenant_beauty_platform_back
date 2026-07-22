@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using multi_tenant_beauty_platform_back.Infrastructure.Persistence;
+using multi_tenant_beauty_platform_back.Infrastructure.Data;
 
 #nullable disable
 
