@@ -185,6 +185,8 @@ public static class UserEndpoints
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
             if (specialist != null)
             {
+                var oldSalonId = specialist.SalonId;
+                
                 specialist.UpdateSpecialistProfile(
                     request.Address ?? string.Empty,
                     request.Latitude,
@@ -196,6 +198,35 @@ public static class UserEndpoints
                     request.WorkingHours,
                     request.SalonId
                 );
+                
+                // Sync StaffMember record
+                if (oldSalonId != request.SalonId)
+                {
+                    // Remove from old salon
+                    if (oldSalonId.HasValue)
+                    {
+                        var oldStaff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == oldSalonId.Value, ct);
+                        if (oldStaff != null) context.StaffMembers.Remove(oldStaff);
+                    }
+                    
+                    // Add to new salon
+                    if (request.SalonId.HasValue)
+                    {
+                        var exists = await context.StaffMembers.AnyAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == request.SalonId.Value, ct);
+                        if (!exists)
+                        {
+                            var newStaff = new multi_tenant_beauty_platform_back.Domain.Entities.StaffMember(
+                                request.SalonId.Value, 
+                                request.FullName, 
+                                request.Description ?? "Specialist", 
+                                request.LogoUrl, 
+                                request.WorkingHours ?? "09:00-18:00", 
+                                "Active", 
+                                specialist.Id);
+                            context.StaffMembers.Add(newStaff);
+                        }
+                    }
+                }
             }
             else
             {
@@ -296,6 +327,69 @@ public static class UserEndpoints
         .WithSummary("Update user status")
         .WithDescription("Updates the status of a user (e.g. Verified, Rejected, Blocked).");
 
+        group.MapPut("/{id:guid}/salon", async (Guid id, [FromBody] UpdateUserSalonRequest request, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+            if (user == null || user.Role != "specialist")
+            {
+                return Results.NotFound(new { message = "Specialist not found." });
+            }
+
+            var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == id, ct);
+            if (specialist != null)
+            {
+                var oldSalonId = specialist.SalonId;
+                
+                // We update only the SalonId
+                specialist.UpdateSpecialistProfile(
+                    specialist.Address ?? string.Empty,
+                    specialist.Latitude,
+                    specialist.Longitude,
+                    specialist.Description,
+                    specialist.SocialMedias,
+                    specialist.LogoUrl,
+                    specialist.PreferredColors,
+                    specialist.WorkingHours,
+                    request.SalonId
+                );
+                
+                // Sync StaffMember record
+                if (oldSalonId != request.SalonId)
+                {
+                    // Remove from old salon
+                    if (oldSalonId.HasValue)
+                    {
+                        var oldStaff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == oldSalonId.Value, ct);
+                        if (oldStaff != null) context.StaffMembers.Remove(oldStaff);
+                    }
+                    
+                    // Add to new salon
+                    if (request.SalonId.HasValue)
+                    {
+                        var exists = await context.StaffMembers.AnyAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == request.SalonId.Value, ct);
+                        if (!exists)
+                        {
+                            var newStaff = new multi_tenant_beauty_platform_back.Domain.Entities.StaffMember(
+                                request.SalonId.Value, 
+                                user.FullName, 
+                                specialist.Description ?? "Specialist", 
+                                specialist.LogoUrl, 
+                                specialist.WorkingHours ?? "09:00-18:00", 
+                                "Active", 
+                                specialist.Id);
+                            context.StaffMembers.Add(newStaff);
+                        }
+                    }
+                }
+                
+                await context.SaveChangesAsync(ct);
+                return Results.Ok(new { message = "Salon updated successfully." });
+            }
+
+            return Results.NotFound(new { message = "Specialist profile not found." });
+        })
+        .WithSummary("Update a specialist's salon (Admin)");
+
         group.MapGet("/my-letters", async (ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
         {
             var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -344,4 +438,8 @@ public record UpdatePasswordRequest(
 public record UpdateStatusRequest(
     string Status,
     string? Reason
+);
+
+public record UpdateUserSalonRequest(
+    Guid? SalonId
 );

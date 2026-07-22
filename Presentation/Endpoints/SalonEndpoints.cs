@@ -376,6 +376,25 @@ public static class SalonEndpoints
             string? graphicsUrl = specialist.LogoUrl;
             string? workingHours = specialist.WorkingHours;
 
+            var oldSalonId = specialist.SalonId;
+            specialist.UpdateSpecialistProfile(
+                specialist.Address ?? string.Empty,
+                specialist.Latitude,
+                specialist.Longitude,
+                specialist.Description,
+                specialist.SocialMedias,
+                specialist.LogoUrl,
+                specialist.PreferredColors,
+                specialist.WorkingHours,
+                userId
+            );
+
+            if (oldSalonId.HasValue && oldSalonId.Value != userId)
+            {
+                var oldStaff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == oldSalonId.Value, ct);
+                if (oldStaff != null) context.StaffMembers.Remove(oldStaff);
+            }
+
             var staff = new StaffMember(userId, fullName, title, graphicsUrl, workingHours, "Active", request.SpecialistId);
             context.StaffMembers.Add(staff);
             await context.SaveChangesAsync(ct);

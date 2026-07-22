@@ -10,11 +10,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly multi_tenant_beauty_platform_back.Infrastructure.Data.ApplicationDbContext _context;
 
-    public AuthService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
+    public AuthService(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator, multi_tenant_beauty_platform_back.Infrastructure.Data.ApplicationDbContext context)
     {
         _userRepository = userRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _context = context;
     }
 
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -103,6 +105,24 @@ public class AuthService : IAuthService
         }
 
         var savedUser = await _userRepository.AddAsync(specialist, cancellationToken);
+
+        if (request.SalonId.HasValue)
+        {
+            var exists = await _context.StaffMembers.AnyAsync(sm => sm.SpecialistId == savedUser.Id && sm.SalonId == request.SalonId.Value, cancellationToken);
+            if (!exists)
+            {
+                var newStaff = new multi_tenant_beauty_platform_back.Domain.Entities.StaffMember(
+                    request.SalonId.Value,
+                    request.FullName,
+                    request.Description ?? "Specialist",
+                    request.LogoUrl,
+                    request.WorkingHours ?? "09:00-18:00",
+                    "Active",
+                    savedUser.Id);
+                _context.StaffMembers.Add(newStaff);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
 
         return new RegisterResponseDto(savedUser.Id, savedUser.IsOnboardingCompleted);
     }
