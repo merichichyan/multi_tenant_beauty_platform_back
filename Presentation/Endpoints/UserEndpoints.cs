@@ -208,23 +208,23 @@ public static class UserEndpoints
                         var oldStaff = await context.StaffMembers.FirstOrDefaultAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == oldSalonId.Value, ct);
                         if (oldStaff != null) context.StaffMembers.Remove(oldStaff);
                     }
-                    
-                    // Add to new salon
-                    if (request.SalonId.HasValue)
+                }
+                
+                // Always ensure they are in the new salon (if set), in case it was missing
+                if (request.SalonId.HasValue)
+                {
+                    var exists = await context.StaffMembers.AnyAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == request.SalonId.Value, ct);
+                    if (!exists)
                     {
-                        var exists = await context.StaffMembers.AnyAsync(sm => sm.SpecialistId == specialist.Id && sm.SalonId == request.SalonId.Value, ct);
-                        if (!exists)
-                        {
-                            var newStaff = new multi_tenant_beauty_platform_back.Domain.Entities.StaffMember(
-                                request.SalonId.Value, 
-                                request.FullName, 
-                                request.Description ?? "Specialist", 
-                                request.LogoUrl, 
-                                request.WorkingHours ?? "09:00-18:00", 
-                                "Active", 
-                                specialist.Id);
-                            context.StaffMembers.Add(newStaff);
-                        }
+                        var newStaff = new multi_tenant_beauty_platform_back.Domain.Entities.StaffMember(
+                            request.SalonId.Value, 
+                            request.FullName, 
+                            request.Description ?? "Specialist", 
+                            request.LogoUrl, 
+                            request.WorkingHours ?? "09:00-18:00", 
+                            "Active", 
+                            specialist.Id);
+                        context.StaffMembers.Add(newStaff);
                     }
                 }
             }
