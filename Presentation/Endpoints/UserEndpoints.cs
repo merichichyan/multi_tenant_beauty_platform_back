@@ -55,6 +55,7 @@ public static class UserEndpoints
             double? longitude = null;
 
             Guid? salonId = null;
+            Salon? salon = null;
 
             var specialist = await context.Specialists.FirstOrDefaultAsync(s => s.Id == userId, ct);
             if (specialist != null)
@@ -71,16 +72,16 @@ public static class UserEndpoints
 
                 if (specialist.SalonId.HasValue)
                 {
-                    var salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == specialist.SalonId.Value, ct);
-                    if (salon != null)
+                    var attachedSalon = await context.Salons.FirstOrDefaultAsync(s => s.Id == specialist.SalonId.Value, ct);
+                    if (attachedSalon != null)
                     {
-                        salonName = LocalizationHelper.LocalizeString(salon.SalonName, lang);
+                        salonName = LocalizationHelper.LocalizeString(attachedSalon.SalonName, lang);
                     }
                 }
             }
             else
             {
-                var salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == userId, ct);
+                salon = await context.Salons.FirstOrDefaultAsync(s => s.Id == userId, ct);
                 if (salon != null)
                 {
                     logoUrl = salon.LogoUrl;
@@ -103,7 +104,7 @@ public static class UserEndpoints
                     .Where(l => l.UserId == userId)
                     .OrderByDescending(l => l.CreatedAt)
                     .FirstOrDefaultAsync(ct);
-                rejectionReason = latestLetter?.Content;
+                rejectionReason = latestLetter?.Message;
             }
 
             return Results.Ok(new
