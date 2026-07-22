@@ -126,7 +126,66 @@ public class SalonService : ISalonService
             .Where(s => s.SpecialistId.HasValue && specIds.Contains(s.SpecialistId.Value))
             .ToListAsync(ct);
 
+        var directSpecialists = await _context.Specialists
+            .Include(sp => sp.Services)
+            .Where(sp => sp.SalonId == salon.Id)
+            .ToListAsync(ct);
+
         var lang = GetLanguage();
+
+        var staffDtos = salon.StaffMembers.Select(sm => {
+            var smServices = sm.Services.ToList();
+            if (sm.SpecialistId.HasValue)
+            {
+                var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
+                smServices.AddRange(specServices);
+            }
+            return new StaffMemberDto
+            {
+                Id = sm.Id,
+                FullName = sm.FullName,
+                Title = sm.Title,
+                GraphicsUrl = sm.GraphicsUrl,
+                WorkingHours = sm.WorkingHours,
+                Status = sm.Status,
+                SpecialistId = sm.SpecialistId,
+                Services = smServices.Select(svc => new ServiceItemDto
+                {
+                    Id = svc.Id,
+                    Name = svc.Name,
+                    Category = svc.Category,
+                    Price = svc.Price,
+                    DurationMinutes = svc.DurationMinutes,
+                    IsActive = svc.IsActive
+                }).ToList()
+            };
+        }).ToList();
+
+        foreach (var sp in directSpecialists)
+        {
+            if (!staffDtos.Any(sm => sm.SpecialistId == sp.Id || sm.Id == sp.Id))
+            {
+                staffDtos.Add(new StaffMemberDto
+                {
+                    Id = sp.Id,
+                    FullName = LocalizationHelper.LocalizeString(sp.FullName, lang),
+                    Title = "Specialist",
+                    GraphicsUrl = sp.LogoUrl,
+                    WorkingHours = LocalizationHelper.LocalizeString(sp.WorkingHours ?? "09:00-18:00", lang),
+                    Status = "Active",
+                    SpecialistId = sp.Id,
+                    Services = sp.Services.Select(svc => new ServiceItemDto
+                    {
+                        Id = svc.Id,
+                        Name = svc.Name,
+                        Category = svc.Category,
+                        Price = svc.Price,
+                        DurationMinutes = svc.DurationMinutes,
+                        IsActive = svc.IsActive
+                    }).ToList()
+                });
+            }
+        }
 
         return new SalonListItemDto
         {
@@ -145,33 +204,7 @@ public class SalonService : ISalonService
             Rating = salon.Rating,
             StartingPrice = salon.StartingPrice,
             AvailabilityStatus = salon.AvailabilityStatus,
-            StaffMembers = salon.StaffMembers.Select(sm => {
-                var smServices = sm.Services.ToList();
-                if (sm.SpecialistId.HasValue)
-                {
-                    var specServices = specialistServices.Where(svc => svc.SpecialistId == sm.SpecialistId.Value).ToList();
-                    smServices.AddRange(specServices);
-                }
-                return new StaffMemberDto
-                {
-                    Id = sm.Id,
-                    FullName = sm.FullName,
-                    Title = sm.Title,
-                    GraphicsUrl = sm.GraphicsUrl,
-                    WorkingHours = sm.WorkingHours,
-                    Status = sm.Status,
-                    SpecialistId = sm.SpecialistId,
-                    Services = smServices.Select(svc => new ServiceItemDto
-                    {
-                        Id = svc.Id,
-                        Name = svc.Name,
-                        Category = svc.Category,
-                        Price = svc.Price,
-                        DurationMinutes = svc.DurationMinutes,
-                        IsActive = svc.IsActive
-                    }).ToList()
-                };
-            }).ToList()
+            StaffMembers = staffDtos
         };
     }
 
