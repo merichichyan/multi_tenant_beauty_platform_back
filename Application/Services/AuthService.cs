@@ -3,6 +3,7 @@ using multi_tenant_beauty_platform_back.Domain.Entities;
 using multi_tenant_beauty_platform_back.Domain.Exceptions;
 using multi_tenant_beauty_platform_back.Domain.Repositories;
 using multi_tenant_beauty_platform_back.Domain.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace multi_tenant_beauty_platform_back.Application.Services;
 
