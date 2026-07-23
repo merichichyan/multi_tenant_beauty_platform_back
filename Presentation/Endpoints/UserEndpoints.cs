@@ -288,6 +288,36 @@ public static class UserEndpoints
         .RequireAuthorization()
         .WithSummary("Update logged-in user password");
 
+        group.MapPut("/{id:guid}/password", async (Guid id, [FromBody] AdminResetPasswordRequest request, ClaimsPrincipal principal, ApplicationDbContext context, CancellationToken ct) =>
+        {
+            // Only admins can reset other users' passwords
+            var callerRole = principal.FindFirstValue(ClaimTypes.Role);
+            if (callerRole?.ToLower() != "admin")
+            {
+                return Results.Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+            {
+                return Results.BadRequest(new { message = "Password must be at least 6 characters." });
+            }
+
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+            if (user == null)
+            {
+                return Results.NotFound(new { message = "User not found." });
+            }
+
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatePasswordHash(newPasswordHash);
+
+            await context.SaveChangesAsync(ct);
+            return Results.Ok(new { message = "Password reset successfully." });
+        })
+        .RequireAuthorization()
+        .WithSummary("Admin: Reset any user password");
+
+
         group.MapGet("/", async ([FromQuery] string? status, [FromQuery] int pageNumber, [FromQuery] int pageSize, IUserService userService, CancellationToken ct) =>
         {
             // Default pagination values if not provided
@@ -442,4 +472,8 @@ public record UpdateStatusRequest(
 
 public record UpdateUserSalonRequest(
     Guid? SalonId
+);
+
+public record AdminResetPasswordRequest(
+    string NewPassword
 );
