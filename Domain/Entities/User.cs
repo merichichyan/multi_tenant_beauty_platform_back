@@ -3,11 +3,11 @@ namespace multi_tenant_beauty_platform_back.Domain.Entities;
 public class User
 {
     public Guid Id { get; private set; }
-    public string Email { get; private set; } = string.Empty;
+    public string Phone { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
     public string FullName { get; private set; } = string.Empty;
     public string Role { get; private set; } = "user";
-    public string? Phone { get; private set; }
+    public string? Email { get; private set; }
     public string? Gender { get; private set; }
     public DateTime? Birthday { get; private set; }
     public string? DeviceId { get; private set; }
@@ -18,14 +18,14 @@ public class User
 
     protected User() { }
 
-    public User(string email, string passwordHash, string fullName, string role, string? phone = null, string? gender = null, DateTime? birthday = null, string? deviceId = null)
+    public User(string phone, string passwordHash, string fullName, string role, string? email = null, string? gender = null, DateTime? birthday = null, string? deviceId = null)
     {
         Id = Guid.NewGuid();
-        Email = email.ToLowerInvariant().Trim();
+        Phone = phone.Trim();
         PasswordHash = passwordHash;
         FullName = fullName;
         Role = role;
-        Phone = phone;
+        Email = email?.ToLowerInvariant().Trim();
         Gender = gender;
         Birthday = birthday;
         DeviceId = deviceId;
@@ -52,11 +52,11 @@ public class User
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateProfile(string email, string fullName, string? phone, string? gender, DateTime? birthday)
+    public void UpdateProfile(string phone, string fullName, string? email, string? gender, DateTime? birthday)
     {
-        Email = email.ToLowerInvariant().Trim();
+        Phone = phone.Trim();
         FullName = fullName;
-        Phone = phone;
+        Email = email?.ToLowerInvariant().Trim();
         Gender = gender;
         Birthday = birthday;
         UpdatedAt = DateTime.UtcNow;
