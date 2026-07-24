@@ -45,17 +45,33 @@ public class AuthService : IAuthService
     {
         ValidateUserRegisterRequest(request);
 
-        var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        var phone = request.Phone.Trim();
+        var existingUser = await _userRepository.GetByPhoneAsync(phone, cancellationToken);
         if (existingUser != null)
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                { nameof(request.Email), new[] { "Email is already registered." } }
+                { nameof(request.Phone), new[] { "Phone number is already registered." } }
             });
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            var existingEmailUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+            if (existingEmailUser != null)
+            {
+                throw new ValidationException(new Dictionary<string, string[]>
+                {
+                    { nameof(request.Email), new[] { "Email is already registered." } }
+                });
+            }
+        }
+
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User(request.Email, passwordHash, request.FullName, request.Role.ToLower().Trim(), request.Phone, request.Gender, request.Birthday, request.DeviceId);
+        var fullName = string.IsNullOrWhiteSpace(request.FullName) ? phone : request.FullName.Trim();
+        var role = string.IsNullOrWhiteSpace(request.Role) ? "user" : request.Role.ToLower().Trim();
+
+        var user = new User(phone, passwordHash, fullName, role, request.Email, request.Gender, request.Birthday, request.DeviceId);
 
         var savedUser = await _userRepository.AddAsync(user, cancellationToken);
 
@@ -187,18 +203,25 @@ public class AuthService : IAuthService
     {
         ValidateLoginRequest(request);
 
-        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        User? user = null;
+        var identifier = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone : request.Email;
+        if (!string.IsNullOrWhiteSpace(identifier))
+        {
+            user = await _userRepository.GetByPhoneAsync(identifier, cancellationToken)
+                ?? await _userRepository.GetByEmailAsync(identifier, cancellationToken);
+        }
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             throw new ValidationException(new Dictionary<string, string[]>
             {
-                { "Credentials", new[] { "Invalid email or password." } }
+                { "Credentials", new[] { "Invalid phone number, email or password." } }
             });
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResponseDto(token, user.IsOnboardingCompleted, user.Role, user.Id, user.Email);
+        return new AuthResponseDto(token, user.IsOnboardingCompleted, user.Role, user.Id, user.Phone ?? user.Email ?? string.Empty);
     }
 
     public async Task CompleteOnboardingAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -284,24 +307,13 @@ public class AuthService : IAuthService
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(request.Phone))
         {
-            errors.Add(nameof(request.Email), new[] { "Email is required." });
+            errors.Add(nameof(request.Phone), new[] { "Phone number is required." });
         }
         if (string.IsNullOrWhiteSpace(request.Password))
         {
             errors.Add(nameof(request.Password), new[] { "Password is required." });
-        }
-        if (string.IsNullOrWhiteSpace(request.FullName))
-        {
-            errors.Add(nameof(request.FullName), new[] { "Full name is required." });
-        }
-        if (string.IsNullOrWhiteSpace(request.Role) || 
-            !(request.Role.ToLower().Trim() == "user" || 
-              request.Role.ToLower().Trim() == "specialist" || 
-              request.Role.ToLower().Trim() == "salon"))
-        {
-            errors.Add(nameof(request.Role), new[] { "Valid role (user, specialist, salon) is required." });
         }
 
         if (errors.Count > 0)
@@ -382,9 +394,9 @@ public class AuthService : IAuthService
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(request.Phone) && string.IsNullOrWhiteSpace(request.Email))
         {
-            errors.Add(nameof(request.Email), new[] { "Email is required." });
+            errors.Add("Identifier", new[] { "Phone or email is required." });
         }
         if (string.IsNullOrWhiteSpace(request.Password))
         {

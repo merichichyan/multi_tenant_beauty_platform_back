@@ -21,8 +21,15 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(email)) return null;
         var normalizedEmail = email.ToLowerInvariant().Trim();
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+    }
+
+    public async Task<User?> GetByPhoneAsync(string phone, CancellationToken cancellationToken = default)
+    {
+        var normalizedPhone = phone.Trim();
+        return await _context.Users.FirstOrDefaultAsync(u => u.Phone == normalizedPhone, cancellationToken);
     }
 
     public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
