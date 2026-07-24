@@ -124,8 +124,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/api/swagger.json", "Multi-Tenant Beauty Platform API"));
 }
 
-app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
